@@ -1,33 +1,50 @@
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { RideCard } from '@/components/rides/ride-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useAvailableRides } from '@/hooks/use-available-rides';
 import { useAppState } from '@/state/app-provider';
 
 export default function HomeScreen() {
   const { currentUser } = useAppState();
+  const { rides, isLoading, error } = useAvailableRides();
 
   if (!currentUser) return null;
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <ThemedText type="subtitle">Olá, {currentUser.name}</ThemedText>
-          <ThemedText themeColor="textSecondary">
-            Este é o início da sua experiência na RotaUni.
-          </ThemedText>
-
-          <View style={styles.profile}>
-            <ThemedText type="smallBold">Seu perfil</ThemedText>
-            <ThemedText>Faculdade: {currentUser.university}</ThemedText>
-            <ThemedText>Campus: {currentUser.campus}</ThemedText>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <ThemedText type="subtitle">Olá, {currentUser.name}!</ThemedText>
+            <ThemedText themeColor="textSecondary">Saindo de:</ThemedText>
+            <ThemedText type="smallBold">{currentUser.campus}</ThemedText>
           </View>
 
-          <ThemedText themeColor="textSecondary">
-            As caronas serão implementadas na próxima etapa.
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Caronas disponíveis
           </ThemedText>
-        </View>
+
+          {isLoading ? (
+            <View style={styles.feedback}>
+              <ActivityIndicator />
+              <ThemedText themeColor="textSecondary">Carregando caronas...</ThemedText>
+            </View>
+          ) : error ? (
+            <ThemedText style={styles.error}>{error}</ThemedText>
+          ) : rides.length === 0 ? (
+            <ThemedText themeColor="textSecondary">
+              Nenhuma carona encontrada para este momento.
+            </ThemedText>
+          ) : (
+            <View style={styles.ridesList}>
+              {rides.map((ride) => (
+                <RideCard key={ride.id} ride={ride} />
+              ))}
+            </View>
+          )}
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -36,6 +53,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { flex: 1, padding: 24, gap: 16 },
-  profile: { gap: 8, padding: 20, borderRadius: 8, backgroundColor: '#F0F0F3' },
+  content: { padding: 24, gap: 20 },
+  header: { gap: 6 },
+  sectionTitle: { fontSize: 24, lineHeight: 32 },
+  ridesList: { gap: 14 },
+  feedback: { alignItems: 'center', gap: 12, paddingVertical: 32 },
+  error: { color: '#B42318' },
 });
