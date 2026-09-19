@@ -1,16 +1,20 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RideCard } from '@/components/rides/ride-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAvailableRides } from '@/hooks/use-available-rides';
+import { useRide } from '@/hooks/use-ride';
+import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 
 export default function HomeScreen() {
-  const { currentUser } = useAppState();
+  const { currentUser, currentBooking } = useAppState();
   const { rides, isLoading, error } = useAvailableRides();
+  const { ride: bookedRide } = useRide(currentBooking?.rideId);
+  const theme = useTheme();
 
   if (!currentUser) return null;
 
@@ -23,6 +27,30 @@ export default function HomeScreen() {
             <ThemedText themeColor="textSecondary">Saindo de:</ThemedText>
             <ThemedText type="smallBold">{currentUser.campus}</ThemedText>
           </View>
+
+          {currentBooking && bookedRide ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                router.push({
+                  pathname: '/caronas/[rideId]',
+                  params: { rideId: currentBooking.rideId },
+                })
+              }
+              style={styles.currentBookingPressable}>
+              <ThemedView
+                type="backgroundElement"
+                style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
+                <ThemedText type="smallBold">Carona escolhida</ThemedText>
+                <ThemedText>
+                  {bookedRide.driver.name} • {bookedRide.destination} às {bookedRide.departureTime}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Toque para ver os detalhes
+                </ThemedText>
+              </ThemedView>
+            </Pressable>
+          ) : null}
 
           <ThemedText type="subtitle" style={styles.sectionTitle}>
             Caronas disponíveis
@@ -63,6 +91,8 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { padding: 24, gap: 20 },
   header: { gap: 6 },
+  currentBookingPressable: { borderRadius: 10 },
+  currentBooking: { gap: 5, padding: 16, borderRadius: 10, borderWidth: 1 },
   sectionTitle: { fontSize: 24, lineHeight: 32 },
   ridesList: { gap: 14 },
   feedback: { alignItems: 'center', gap: 12, paddingVertical: 32 },

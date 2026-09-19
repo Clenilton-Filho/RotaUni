@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import {
     getRemainingSeats,
     getRideCapacityStatus,
 } from '@/domain/rides/ride.types';
+import { useCreateBooking } from '@/hooks/use-create-booking';
 import { useRide } from '@/hooks/use-ride';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
@@ -15,8 +16,9 @@ import { useAppState } from '@/state/app-provider';
 export default function RideDetailsScreen() {
   const router = useRouter();
   const { rideId } = useLocalSearchParams<{ rideId: string }>();
-  const { currentUser } = useAppState();
+  const { currentUser, currentBooking } = useAppState();
   const { ride, isLoading, error } = useRide(rideId);
+  const { createBooking, isSaving, error: bookingError } = useCreateBooking();
   const theme = useTheme();
 
   if (!currentUser) return null;
@@ -35,6 +37,8 @@ export default function RideDetailsScreen() {
 
   const status = getRideCapacityStatus(ride);
   const remainingSeats = getRemainingSeats(ride);
+  const hasCurrentBooking = currentBooking !== null;
+  const isSelectedRide = currentBooking?.rideId === ride.id;
   const capacityMessage =
     status === 'full'
       ? 'Lotada. Não há vagas disponíveis.'
@@ -100,17 +104,34 @@ export default function RideDetailsScreen() {
 
           <Pressable
             accessibilityRole="button"
-            disabled={status === 'full'}
-            onPress={() => undefined}
+            disabled={status === 'full' || hasCurrentBooking || isSaving}
+            onPress={async () => {
+              const wasCreated = await createBooking(ride.id);
+              if (wasCreated) {
+                router.replace({
+                  pathname: '/carona-confirmada',
+                  params: { rideId: ride.id },
+                } as unknown as Href);
+              }
+            }}
             style={[
               styles.actionButton,
               { shadowColor: theme.text },
-              status === 'full' && styles.disabledButton,
+              (status === 'full' || hasCurrentBooking || isSaving) && styles.disabledButton,
             ]}>
             <ThemedText style={styles.actionText}>
-              {status === 'full' ? 'Sem vagas' : 'Escolher esta carona'}
+              {status === 'full'
+                ? 'Sem vagas'
+                : isSaving
+                  ? 'Salvando escolha...'
+                  : isSelectedRide
+                    ? 'Carona já escolhida'
+                    : hasCurrentBooking
+                      ? 'Você já possui uma carona escolhida'
+                      : 'Escolher esta carona'}
             </ThemedText>
           </Pressable>
+          {bookingError ? <ThemedText style={styles.error}>{bookingError}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -178,5 +199,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: { backgroundColor: '#A0A0A0' },
   actionText: { color: '#FFFFFF', fontWeight: '700' },
+  error: { color: '#B42318' },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

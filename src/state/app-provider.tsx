@@ -1,25 +1,33 @@
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import type { Booking } from '@/domain/booking/booking.types';
 import type { UserProfile } from '@/domain/user/user.types';
+import { bookingRepository } from '@/services/booking/local-booking.repository';
 import { userRepository } from '@/services/user/user.repository';
 
 type AppState = {
   currentUser: UserProfile | null;
+  currentBooking: Booking | null;
   isHydrated: boolean;
   saveUser: (user: UserProfile) => Promise<void>;
   updateUser: (user: UserProfile) => Promise<void>;
+  saveBooking: (booking: Booking) => Promise<void>;
+  clearBooking: () => Promise<void>;
 };
 
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: PropsWithChildren) {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    userRepository
-      .getCurrentUser()
-      .then(setCurrentUser)
+    Promise.all([userRepository.getCurrentUser(), bookingRepository.getCurrentBooking()])
+      .then(([user, booking]) => {
+        setCurrentUser(user);
+        setCurrentBooking(booking);
+      })
       .finally(() => setIsHydrated(true));
   }, []);
 
@@ -33,8 +41,27 @@ export function AppProvider({ children }: PropsWithChildren) {
     setCurrentUser(user);
   }
 
+  async function saveBooking(booking: Booking) {
+    await bookingRepository.saveBooking(booking);
+    setCurrentBooking(booking);
+  }
+
+  async function clearBooking() {
+    await bookingRepository.clearCurrentBooking();
+    setCurrentBooking(null);
+  }
+
   return (
-    <AppContext.Provider value={{ currentUser, isHydrated, saveUser, updateUser }}>
+    <AppContext.Provider
+      value={{
+        currentUser,
+        currentBooking,
+        isHydrated,
+        saveUser,
+        updateUser,
+        saveBooking,
+        clearBooking,
+      }}>
       {children}
     </AppContext.Provider>
   );
