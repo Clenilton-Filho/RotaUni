@@ -1,18 +1,19 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import {
-  getRemainingSeats,
-  getRideCapacityStatus,
-  type Ride,
+    getRemainingSeats,
+    getRideCapacityStatus,
+    type Ride,
 } from '@/domain/rides/ride.types';
 
 type RideCardProps = {
   ride: Ride;
+  onPress?: () => void;
 };
 
-export function RideCard({ ride }: RideCardProps) {
+export function RideCard({ ride, onPress }: RideCardProps) {
   const status = getRideCapacityStatus(ride);
   const remainingSeats = getRemainingSeats(ride);
   const statusLabel = {
@@ -21,7 +22,7 @@ export function RideCard({ ride }: RideCardProps) {
     full: 'Lotada',
   }[status];
 
-  return (
+  const card = (
     <ThemedView type="backgroundElement" style={styles.card}>
       <View style={styles.header}>
         <View style={styles.driverInfo}>
@@ -57,6 +58,14 @@ export function RideCard({ ride }: RideCardProps) {
         ) : null}
       </View>
     </ThemedView>
+  );
+
+  if (!onPress) return card;
+
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress}>
+      {card}
+    </Pressable>
   );
 }
 

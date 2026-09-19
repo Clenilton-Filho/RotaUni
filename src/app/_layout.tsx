@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AppProvider } from '@/state/app-provider';
@@ -12,10 +13,12 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AppProvider>
-        <AnimatedSplashOverlay />
-        <Stack screenOptions={{ headerShown: false }} />
-      </AppProvider>
+      <SafeAreaProvider>
+        <AppProvider>
+          <AnimatedSplashOverlay />
+          <Stack screenOptions={{ headerShown: false }} />
+        </AppProvider>
+      </SafeAreaProvider>
     </ThemeProvider>
   );
 }

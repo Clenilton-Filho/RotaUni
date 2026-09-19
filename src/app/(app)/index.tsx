@@ -1,4 +1,6 @@
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RideCard } from '@/components/rides/ride-card';
 import { ThemedText } from '@/components/themed-text';
@@ -40,7 +42,13 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.ridesList}>
               {rides.map((ride) => (
-                <RideCard key={ride.id} ride={ride} />
+                <RideCard
+                  key={ride.id}
+                  ride={ride}
+                  onPress={() =>
+                    router.push({ pathname: '/caronas/[rideId]', params: { rideId: ride.id } })
+                  }
+                />
               ))}
             </View>
           )}
