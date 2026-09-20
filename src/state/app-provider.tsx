@@ -3,6 +3,8 @@ import { createContext, type PropsWithChildren, useContext, useEffect, useState 
 import type { Booking } from '@/domain/booking/booking.types';
 import type { UserProfile } from '@/domain/user/user.types';
 import { bookingRepository } from '@/services/booking/local-booking.repository';
+import { rideHistoryRepository } from '@/services/history/local-ride-history.repository';
+import { ratingRepository } from '@/services/rating/local-rating.repository';
 import { userRepository } from '@/services/user/user.repository';
 
 type AppState = {
@@ -13,6 +15,8 @@ type AppState = {
   updateUser: (user: UserProfile) => Promise<void>;
   saveBooking: (booking: Booking) => Promise<void>;
   clearBooking: () => Promise<void>;
+  logout: () => Promise<void>;
+  resetLocalData: () => Promise<void>;
 };
 
 const AppContext = createContext<AppState | null>(null);
@@ -51,6 +55,23 @@ export function AppProvider({ children }: PropsWithChildren) {
     setCurrentBooking(null);
   }
 
+  async function logout() {
+    await Promise.all([userRepository.removeCurrentUser(), bookingRepository.clearCurrentBooking()]);
+    setCurrentUser(null);
+    setCurrentBooking(null);
+  }
+
+  async function resetLocalData() {
+    await Promise.all([
+      userRepository.removeCurrentUser(),
+      bookingRepository.clearCurrentBooking(),
+      rideHistoryRepository.clearAll(),
+      ratingRepository.clearAll(),
+    ]);
+    setCurrentUser(null);
+    setCurrentBooking(null);
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -61,6 +82,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         updateUser,
         saveBooking,
         clearBooking,
+        logout,
+        resetLocalData,
       }}>
       {children}
     </AppContext.Provider>

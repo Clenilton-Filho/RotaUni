@@ -5,8 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useFinalizeRide } from '@/hooks/use-finalize-ride';
 import { useRide } from '@/hooks/use-ride';
-import { useRating } from '@/hooks/use-rating';
 import { useAppState } from '@/state/app-provider';
 
 export default function RideConfirmedScreen() {
@@ -14,7 +14,7 @@ export default function RideConfirmedScreen() {
   const { rideId } = useLocalSearchParams<{ rideId: string }>();
   const { clearBooking, currentBooking, currentUser } = useAppState();
   const { ride, isLoading } = useRide(rideId);
-  const { rating, isLoading: isRatingLoading } = useRating(rideId);
+  const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
   const [isCancelling, setIsCancelling] = useState(false);
 
   if (!currentUser || !currentBooking || currentBooking.rideId !== rideId) {
@@ -68,21 +68,24 @@ export default function RideConfirmedScreen() {
             <ThemedText style={styles.buttonText}>Voltar para a Home</ThemedText>
           </Pressable>
 
-          {!isRatingLoading && rating ? (
-            <ThemedText style={styles.evaluatedText}>✓ Motorista avaliado ({rating.stars}/5)</ThemedText>
-          ) : (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() =>
-                router.push({
-                  pathname: '/avaliar-carona/[rideId]',
-                  params: { rideId: ride.id },
-                } as unknown as Href)
+          <Pressable
+            accessibilityRole="button"
+            disabled={isFinalizing}
+            onPress={async () => {
+              const finalized = await finalizeRide();
+              if (finalized) {
+                router.replace({
+                  pathname: '/carona-finalizada',
+                  params: { rideId },
+                } as unknown as Href);
               }
-              style={styles.button}>
-              <ThemedText style={styles.buttonText}>Avaliar motorista</ThemedText>
-            </Pressable>
-          )}
+            }}
+            style={styles.finalizeButton}>
+            <ThemedText style={styles.finalizeText}>
+              {isFinalizing ? 'Finalizando...' : 'Finalizar carona'}
+            </ThemedText>
+          </Pressable>
+          {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
 
           <Pressable
             accessibilityRole="button"
@@ -135,7 +138,6 @@ const styles = StyleSheet.create({
   content: { padding: 20, gap: 18 },
   header: { gap: 6 },
   confirmation: { color: '#18794E', fontWeight: '700' },
-  evaluatedText: { color: '#18794E', fontWeight: '700', textAlign: 'center' },
   summary: { gap: 10, padding: 18, borderRadius: 10 },
   rating: { color: '#B76E00', fontWeight: '700' },
   details: { gap: 5 },
@@ -143,5 +145,8 @@ const styles = StyleSheet.create({
   buttonText: { color: '#FFFFFF', fontWeight: '700' },
   cancelButton: { alignItems: 'center', padding: 12 },
   cancelText: { color: '#B42318', fontWeight: '700' },
+  finalizeButton: { alignItems: 'center', padding: 12 },
+  finalizeText: { color: '#18794E', fontWeight: '700' },
+  error: { color: '#B42318' },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,6 +26,14 @@ export default function HomeScreen() {
             <ThemedText type="subtitle">Olá, {currentUser.name}!</ThemedText>
             <ThemedText themeColor="textSecondary">Saindo de:</ThemedText>
             <ThemedText type="smallBold">{currentUser.campus}</ThemedText>
+            <View style={styles.headerActions}>
+              <Pressable onPress={() => router.push('/perfil' as Href)}>
+                <ThemedText type="linkPrimary">Perfil</ThemedText>
+              </Pressable>
+              <Pressable onPress={() => router.push('/historico' as Href)}>
+                <ThemedText type="linkPrimary">Histórico</ThemedText>
+              </Pressable>
+            </View>
           </View>
 
           {currentBooking && bookedRide ? (
@@ -91,6 +99,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { padding: 24, gap: 20 },
   header: { gap: 6 },
+  headerActions: { flexDirection: 'row', gap: 18, marginTop: 8 },
   currentBookingPressable: { borderRadius: 10 },
   currentBooking: { gap: 5, padding: 16, borderRadius: 10, borderWidth: 1 },
   sectionTitle: { fontSize: 24, lineHeight: 32 },

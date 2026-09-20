@@ -6,6 +6,7 @@ export interface UserRepository {
   getCurrentUser(): Promise<UserProfile | null>;
   saveUser(user: UserProfile): Promise<void>;
   updateUser(user: UserProfile): Promise<void>;
+  removeCurrentUser(): Promise<void>;
 }
 
 export const userRepository: UserRepository = {
@@ -19,5 +20,9 @@ export const userRepository: UserRepository = {
 
   updateUser(user) {
     return asyncStorageAdapter.set(StorageKeys.currentUser, user);
+  },
+
+  removeCurrentUser() {
+    return asyncStorageAdapter.remove(StorageKeys.currentUser);
   },
 };

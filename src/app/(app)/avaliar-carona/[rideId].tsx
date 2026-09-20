@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { ThemedView } from '@/components/themed-view';
 import { type RatingStars } from '@/domain/rating/rating.types';
 import { useRating } from '@/hooks/use-rating';
 import { useRide } from '@/hooks/use-ride';
+import { useRideHistory } from '@/hooks/use-ride-history';
 import { useAppState } from '@/state/app-provider';
 
 const starOptions: RatingStars[] = [1, 2, 3, 4, 5];
@@ -18,14 +19,22 @@ export default function RateRideScreen() {
   const { currentBooking, currentUser } = useAppState();
   const { ride, isLoading: isRideLoading } = useRide(rideId);
   const { rating, isLoading: isRatingLoading, isSubmitting, error, submitRating } = useRating(rideId);
+  const { entries, isLoading: isHistoryLoading } = useRideHistory();
   const [selectedStars, setSelectedStars] = useState<RatingStars | null>(null);
 
-  if (!currentUser || !currentBooking || currentBooking.rideId !== rideId) {
+  if (!currentUser) {
     return <FeedbackMessage message="Não há uma reserva válida para avaliar." />;
   }
 
-  if (isRideLoading || isRatingLoading) {
+  if (isRideLoading || isRatingLoading || isHistoryLoading) {
     return <FeedbackMessage message="Carregando avaliação..." showActivity />;
+  }
+
+  const hasActiveBooking = currentBooking?.rideId === rideId && currentBooking.userId === currentUser.id;
+  const hasCompletedRide = entries.some((entry) => entry.history.rideId === rideId);
+
+  if (!hasActiveBooking && !hasCompletedRide) {
+    return <FeedbackMessage message="Não há uma reserva válida para avaliar." />;
   }
 
   if (!ride) {
@@ -41,7 +50,10 @@ export default function RateRideScreen() {
     const savedRating = await submitRating(displayedStars);
 
     if (savedRating) {
-      router.replace({ pathname: '/carona-confirmada', params: { rideId } });
+      router.replace({
+        pathname: '/carona-finalizada',
+        params: { rideId },
+      } as unknown as Href);
     }
   }
 

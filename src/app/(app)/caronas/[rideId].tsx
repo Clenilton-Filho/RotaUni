@@ -10,7 +10,9 @@ import {
     getRideCapacityStatus,
 } from '@/domain/rides/ride.types';
 import { useCreateBooking } from '@/hooks/use-create-booking';
+import { useFinalizeRide } from '@/hooks/use-finalize-ride';
 import { useRide } from '@/hooks/use-ride';
+import { useRideHistory } from '@/hooks/use-ride-history';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 
@@ -20,6 +22,8 @@ export default function RideDetailsScreen() {
   const { clearBooking, currentUser, currentBooking } = useAppState();
   const { ride, isLoading, error } = useRide(rideId);
   const { createBooking, isSaving, error: bookingError } = useCreateBooking();
+    const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
+  const { entries: historyEntries, isLoading: isHistoryLoading } = useRideHistory();
   const theme = useTheme();
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -27,6 +31,10 @@ export default function RideDetailsScreen() {
 
   if (isLoading) {
     return <FeedbackMessage message="Carregando detalhes da carona..." showActivity />;
+  }
+
+  if (isHistoryLoading) {
+    return <FeedbackMessage message="Carregando situação da carona..." showActivity />;
   }
 
   if (error) {
@@ -41,6 +49,7 @@ export default function RideDetailsScreen() {
   const remainingSeats = getRemainingSeats(ride);
   const hasCurrentBooking = currentBooking !== null;
   const isSelectedRide = currentBooking?.rideId === ride.id;
+  const isFinalizedRide = historyEntries.some((entry) => entry.history.rideId === ride.id);
   const capacityMessage =
     status === 'full'
       ? 'Lotada. Não há vagas disponíveis.'
@@ -104,9 +113,33 @@ export default function RideDetailsScreen() {
             </ThemedText>
           </DetailSection>
 
-          {isSelectedRide ? (
+          {isFinalizedRide && !isSelectedRide ? (
+            <View style={styles.finalizedAction}>
+              <ThemedText style={styles.finalizedText}>Carona finalizada</ThemedText>
+              <ThemedText themeColor="textSecondary">
+                Esta experiência está disponível no Histórico.
+              </ThemedText>
+            </View>
+          ) : isSelectedRide ? (
             <View style={styles.currentBookingAction}>
               <ThemedText style={styles.selectedText}>✓ Carona escolhida</ThemedText>
+              <Pressable
+                accessibilityRole="button"
+                disabled={isFinalizing}
+                onPress={async () => {
+                  const finalized = await finalizeRide();
+                  if (finalized) {
+                    router.replace({
+                      pathname: '/carona-finalizada',
+                      params: { rideId },
+                    } as unknown as Href);
+                  }
+                }}
+                style={styles.finalizeButton}>
+                <ThemedText style={styles.finalizeText}>
+                  {isFinalizing ? 'Finalizando...' : 'Finalizar carona'}
+                </ThemedText>
+              </Pressable>
               <Pressable
                 accessibilityRole="button"
                 disabled={isCancelling}
@@ -160,6 +193,7 @@ export default function RideDetailsScreen() {
             </Pressable>
           )}
           {bookingError ? <ThemedText style={styles.error}>{bookingError}</ThemedText> : null}
+          {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -229,6 +263,10 @@ const styles = StyleSheet.create({
   actionText: { color: '#FFFFFF', fontWeight: '700' },
   currentBookingAction: { alignItems: 'center', gap: 10, paddingVertical: 4 },
   selectedText: { color: '#18794E', fontWeight: '700' },
+  finalizeButton: { alignItems: 'center', padding: 12 },
+  finalizeText: { color: '#18794E', fontWeight: '700' },
+  finalizedAction: { alignItems: 'center', gap: 6, paddingVertical: 8 },
+  finalizedText: { color: '#18794E', fontWeight: '700' },
   cancelButton: { alignItems: 'center', padding: 12 },
   cancelText: { color: '#B42318', fontWeight: '700' },
   error: { color: '#B42318' },

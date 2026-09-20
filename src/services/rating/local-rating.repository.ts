@@ -24,6 +24,11 @@ export class LocalRatingRepository implements RatingRepository {
     }
   }
 
+  async clearAll(): Promise<void> {
+    this.saveOperation = null;
+    await asyncStorageAdapter.remove(StorageKeys.ratings);
+  }
+
   private async persistRating(rating: Rating): Promise<Rating> {
     const ratings = await this.getRatings();
     const existingRating = ratings.find(

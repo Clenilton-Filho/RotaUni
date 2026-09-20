@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -36,7 +36,13 @@ export default function CadastroScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <ThemedText type="title">Bem-vindo à RotaUni</ThemedText>
             <ThemedText themeColor="textSecondary">
@@ -65,7 +71,8 @@ export default function CadastroScreen() {
               <ThemedText style={styles.buttonText}>Continuar</ThemedText>
             </Pressable>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -96,7 +103,8 @@ function Field({ label, value, placeholder, onChangeText }: FieldProps) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 32 },
+  keyboardAvoidingView: { flex: 1 },
+  content: { flexGrow: 1, padding: 24, gap: 32 },
   header: { gap: 12 },
   form: { gap: 20 },
   field: { gap: 8 },

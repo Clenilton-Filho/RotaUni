@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import type { Rating, RatingStars } from '@/domain/rating/rating.types';
-import { ridesRepository } from '@/services/rides/mock-rides.repository';
+import { rideHistoryRepository } from '@/services/history/local-ride-history.repository';
 import { ratingRepository } from '@/services/rating/local-rating.repository';
+import { ridesRepository } from '@/services/rides/mock-rides.repository';
 import { useAppState } from '@/state/app-provider';
 
 export function useRating(rideId: string | undefined) {
@@ -49,12 +50,12 @@ export function useRating(rideId: string | undefined) {
       return null;
     }
 
-    if (
-      !rideId ||
-      !currentBooking ||
-      currentBooking.rideId !== rideId ||
-      currentBooking.userId !== currentUser.id
-    ) {
+    const hasActiveBooking =
+      currentBooking?.rideId === rideId && currentBooking?.userId === currentUser.id;
+    const histories = await rideHistoryRepository.listByUser(currentUser.id);
+    const hasCompletedRide = histories.some((history) => history.rideId === rideId);
+
+    if (!rideId || (!hasActiveBooking && !hasCompletedRide)) {
       setError('Não há uma reserva válida para avaliar.');
       return null;
     }
