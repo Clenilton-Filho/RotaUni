@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRide } from '@/hooks/use-ride';
+import { useRating } from '@/hooks/use-rating';
 import { useAppState } from '@/state/app-provider';
 
 export default function RideConfirmedScreen() {
@@ -13,6 +14,7 @@ export default function RideConfirmedScreen() {
   const { rideId } = useLocalSearchParams<{ rideId: string }>();
   const { clearBooking, currentBooking, currentUser } = useAppState();
   const { ride, isLoading } = useRide(rideId);
+  const { rating, isLoading: isRatingLoading } = useRating(rideId);
   const [isCancelling, setIsCancelling] = useState(false);
 
   if (!currentUser || !currentBooking || currentBooking.rideId !== rideId) {
@@ -66,6 +68,22 @@ export default function RideConfirmedScreen() {
             <ThemedText style={styles.buttonText}>Voltar para a Home</ThemedText>
           </Pressable>
 
+          {!isRatingLoading && rating ? (
+            <ThemedText style={styles.evaluatedText}>✓ Motorista avaliado ({rating.stars}/5)</ThemedText>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                router.push({
+                  pathname: '/avaliar-carona/[rideId]',
+                  params: { rideId: ride.id },
+                } as unknown as Href)
+              }
+              style={styles.button}>
+              <ThemedText style={styles.buttonText}>Avaliar motorista</ThemedText>
+            </Pressable>
+          )}
+
           <Pressable
             accessibilityRole="button"
             disabled={isCancelling}
@@ -117,6 +135,7 @@ const styles = StyleSheet.create({
   content: { padding: 20, gap: 18 },
   header: { gap: 6 },
   confirmation: { color: '#18794E', fontWeight: '700' },
+  evaluatedText: { color: '#18794E', fontWeight: '700', textAlign: 'center' },
   summary: { gap: 10, padding: 18, borderRadius: 10 },
   rating: { color: '#B76E00', fontWeight: '700' },
   details: { gap: 5 },
