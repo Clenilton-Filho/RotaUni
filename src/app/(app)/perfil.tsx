@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ import { useAppState } from '@/state/app-provider';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { currentUser, logout, resetLocalData } = useAppState();
+  const { currentAccount, currentUser, logout, resetLocalData } = useAppState();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
@@ -24,7 +24,7 @@ export default function ProfileScreen() {
         onPress: async () => {
           setIsLoggingOut(true);
           await logout();
-          router.replace('/cadastro');
+          router.replace('/login' as Href);
         },
       },
     ]);
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
           onPress: async () => {
             setIsResetting(true);
             await resetLocalData();
-            router.replace('/cadastro');
+            router.replace('/login' as Href);
           },
         },
       ],
@@ -69,6 +69,12 @@ export default function ProfileScreen() {
             <View style={styles.row}>
               <ThemedText type="smallBold">Campus</ThemedText>
               <ThemedText>{currentUser.campus}</ThemedText>
+            </View>
+          </ThemedView>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <View style={styles.row}>
+              <ThemedText type="smallBold">Email</ThemedText>
+              <ThemedText>{currentAccount?.email}</ThemedText>
             </View>
           </ThemedView>
           <Pressable disabled={isLoggingOut} onPress={confirmLogout} style={styles.logoutButton}>

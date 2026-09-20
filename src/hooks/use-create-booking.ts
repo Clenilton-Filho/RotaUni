@@ -28,7 +28,7 @@ export function useCreateBooking() {
     const booking: Booking = {
       id: `${Date.now()}`,
       rideId,
-      userId: currentUser.id,
+      userId: currentUser.userId,
       status: 'confirmed',
       createdAt: new Date().toISOString(),
     };

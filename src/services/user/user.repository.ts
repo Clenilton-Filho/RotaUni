@@ -3,26 +3,34 @@ import { asyncStorageAdapter } from '@/storage/async-storage.adapter';
 import { StorageKeys } from '@/storage/storage.keys';
 
 export interface UserRepository {
-  getCurrentUser(): Promise<UserProfile | null>;
-  saveUser(user: UserProfile): Promise<void>;
-  updateUser(user: UserProfile): Promise<void>;
-  removeCurrentUser(): Promise<void>;
+  getByUserId(userId: string): Promise<UserProfile | null>;
+  saveProfile(profile: UserProfile): Promise<void>;
+  updateProfile(profile: UserProfile): Promise<void>;
+  clearAll(): Promise<void>;
 }
 
 export const userRepository: UserRepository = {
-  getCurrentUser() {
-    return asyncStorageAdapter.get<UserProfile>(StorageKeys.currentUser);
+  async getByUserId(userId: string) {
+    const profiles = (await asyncStorageAdapter.get<UserProfile[]>(StorageKeys.profiles)) ?? [];
+    return profiles.find((profile) => profile.userId === userId) ?? null;
   },
 
-  saveUser(user) {
-    return asyncStorageAdapter.set(StorageKeys.currentUser, user);
+  async saveProfile(profile) {
+    const profiles = (await asyncStorageAdapter.get<UserProfile[]>(StorageKeys.profiles)) ?? [];
+    await asyncStorageAdapter.set(StorageKeys.profiles, [...profiles, profile]);
   },
 
-  updateUser(user) {
-    return asyncStorageAdapter.set(StorageKeys.currentUser, user);
+  async updateProfile(profile) {
+    const profiles = (await asyncStorageAdapter.get<UserProfile[]>(StorageKeys.profiles)) ?? [];
+    await asyncStorageAdapter.set(
+      StorageKeys.profiles,
+      profiles.map((storedProfile) =>
+        storedProfile.userId === profile.userId ? profile : storedProfile,
+      ),
+    );
   },
 
-  removeCurrentUser() {
-    return asyncStorageAdapter.remove(StorageKeys.currentUser);
+  clearAll() {
+    return asyncStorageAdapter.remove(StorageKeys.profiles);
   },
 };

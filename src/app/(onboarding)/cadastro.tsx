@@ -1,36 +1,45 @@
+import { Link, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import type { UserProfile } from '@/domain/user/user.types';
 import { useAppState } from '@/state/app-provider';
 
 export default function CadastroScreen() {
-  const { saveUser } = useAppState();
+  const router = useRouter();
+  const { register } = useAppState();
   const [name, setName] = useState('');
   const [university, setUniversity] = useState('');
   const [campus, setCampus] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [error, setError] = useState('');
 
   async function handleSubmit() {
     const values = [name, university, campus].map((value) => value.trim());
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (values.some((value) => value.length === 0)) {
-      setError('Preencha nome, faculdade e campus.');
+    if (values.some((value) => value.length === 0) || !normalizedEmail || !password || !passwordConfirmation) {
+      setError('Preencha todos os campos.');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return setError('Informe um email válido.');
+    if (password.length < 8) return setError('A senha deve ter pelo menos 8 caracteres.');
+    if (password !== passwordConfirmation) return setError('As senhas não conferem.');
 
-    const user: UserProfile = {
-      id: `${Date.now()}`,
-      name: values[0],
-      university: values[1],
-      campus: values[2],
-      createdAt: new Date().toISOString(),
-    };
-
-    await saveUser(user);
+    try {
+      await register({ email: normalizedEmail, password }, {
+        name: values[0], university: values[1], campus: values[2], createdAt: new Date().toISOString(),
+      });
+      router.replace('/login' as Href);
+    } catch (registrationError) {
+      setError(registrationError instanceof Error && registrationError.message === 'EMAIL_ALREADY_EXISTS'
+        ? 'Este email já está cadastrado.'
+        : 'Não foi possível criar a conta.');
+    }
   }
 
   return (
@@ -52,6 +61,9 @@ export default function CadastroScreen() {
 
           <View style={styles.form}>
             <Field label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
+            <Field label="Email" value={email} onChangeText={setEmail} placeholder="seu@email.com" keyboardType="email-address" />
+            <Field label="Senha" value={password} onChangeText={setPassword} placeholder="Mínimo de 8 caracteres" secureTextEntry />
+            <Field label="Confirmar senha" value={passwordConfirmation} onChangeText={setPasswordConfirmation} placeholder="Repita sua senha" secureTextEntry />
             <Field
               label="Faculdade"
               value={university}
@@ -70,6 +82,9 @@ export default function CadastroScreen() {
             <Pressable style={styles.button} onPress={handleSubmit}>
               <ThemedText style={styles.buttonText}>Continuar</ThemedText>
             </Pressable>
+            <Link href={'/login' as Href} asChild>
+              <Pressable><ThemedText type="linkPrimary">Já tenho uma conta</ThemedText></Pressable>
+            </Link>
           </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -83,9 +98,11 @@ type FieldProps = {
   value: string;
   placeholder: string;
   onChangeText: (value: string) => void;
+  secureTextEntry?: boolean;
+  keyboardType?: 'email-address';
 };
 
-function Field({ label, value, placeholder, onChangeText }: FieldProps) {
+function Field({ label, value, placeholder, onChangeText, secureTextEntry, keyboardType }: FieldProps) {
   return (
     <View style={styles.field}>
       <ThemedText type="smallBold">{label}</ThemedText>
@@ -93,6 +110,9 @@ function Field({ label, value, placeholder, onChangeText }: FieldProps) {
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        autoCapitalize="none"
         placeholderTextColor="#737373"
         style={styles.input}
       />

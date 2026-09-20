@@ -29,12 +29,12 @@ export function useFinalizeRide() {
         return false;
       }
 
-      const rating = await ratingRepository.getByRideAndUser(ride.id, currentUser.id);
+      const rating = await ratingRepository.getByRideAndUser(ride.id, currentUser.userId);
 
       await rideHistoryRepository.save({
         id: `${Date.now()}`,
         rideId: ride.id,
-        userId: currentUser.id,
+        userId: currentUser.userId,
         driverId: ride.driver.id,
         ...(rating ? { ratingId: rating.id } : {}),
         completedAt: new Date().toISOString(),

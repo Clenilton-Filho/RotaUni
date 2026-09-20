@@ -30,7 +30,7 @@ export default function RateRideScreen() {
     return <FeedbackMessage message="Carregando avaliação..." showActivity />;
   }
 
-  const hasActiveBooking = currentBooking?.rideId === rideId && currentBooking.userId === currentUser.id;
+  const hasActiveBooking = currentBooking?.rideId === rideId && currentBooking.userId === currentUser.userId;
   const hasCompletedRide = entries.some((entry) => entry.history.rideId === rideId);
 
   if (!hasActiveBooking && !hasCompletedRide) {

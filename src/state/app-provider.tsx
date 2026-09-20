@@ -1,17 +1,22 @@
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import type { CreateAccountInput, UserAccount } from '@/domain/auth/user-account.types';
 import type { Booking } from '@/domain/booking/booking.types';
 import type { UserProfile } from '@/domain/user/user.types';
+import { sessionRepository } from '@/services/auth/local-session.repository';
+import { userAccountRepository } from '@/services/auth/user-account.repository';
 import { bookingRepository } from '@/services/booking/local-booking.repository';
 import { rideHistoryRepository } from '@/services/history/local-ride-history.repository';
 import { ratingRepository } from '@/services/rating/local-rating.repository';
 import { userRepository } from '@/services/user/user.repository';
 
 type AppState = {
+  currentAccount: UserAccount | null;
   currentUser: UserProfile | null;
   currentBooking: Booking | null;
   isHydrated: boolean;
-  saveUser: (user: UserProfile) => Promise<void>;
+  register: (account: CreateAccountInput, profile: Omit<UserProfile, 'userId'>) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   updateUser: (user: UserProfile) => Promise<void>;
   saveBooking: (booking: Booking) => Promise<void>;
   clearBooking: () => Promise<void>;
@@ -22,26 +27,51 @@ type AppState = {
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: PropsWithChildren) {
+  const [currentAccount, setCurrentAccount] = useState<UserAccount | null>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    Promise.all([userRepository.getCurrentUser(), bookingRepository.getCurrentBooking()])
-      .then(([user, booking]) => {
-        setCurrentUser(user);
-        setCurrentBooking(booking);
-      })
-      .finally(() => setIsHydrated(true));
+    async function hydrate() {
+      const session = await sessionRepository.getCurrentSession();
+      if (!session) return;
+      const account = await userAccountRepository.getById(session.accountId);
+      const profile = account ? await userRepository.getByUserId(account.id) : null;
+      const booking = account ? await bookingRepository.getCurrentBooking() : null;
+
+      if (account && profile) {
+        setCurrentAccount(account);
+        setCurrentUser(profile);
+        setCurrentBooking(booking?.userId === account.id ? booking : null);
+      }
+    }
+
+    hydrate().finally(() => setIsHydrated(true));
   }, []);
 
-  async function saveUser(user: UserProfile) {
-    await userRepository.saveUser(user);
-    setCurrentUser(user);
+  async function register(accountInput: CreateAccountInput, profileData: Omit<UserProfile, 'userId'>) {
+    const account = await userAccountRepository.createAccount(accountInput);
+    const profile = { ...profileData, userId: account.id };
+    await userRepository.saveProfile(profile);
+  }
+
+  async function login(email: string, password: string) {
+    const account = await userAccountRepository.verifyCredentials(email, password);
+    if (!account) return false;
+    const profile = await userRepository.getByUserId(account.id);
+    if (!profile) return false;
+
+    await sessionRepository.saveSession({ accountId: account.id });
+    setCurrentAccount(account);
+    setCurrentUser(profile);
+    const booking = await bookingRepository.getCurrentBooking();
+    setCurrentBooking(booking?.userId === account.id ? booking : null);
+    return true;
   }
 
   async function updateUser(user: UserProfile) {
-    await userRepository.updateUser(user);
+    await userRepository.updateProfile(user);
     setCurrentUser(user);
   }
 
@@ -56,18 +86,22 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   async function logout() {
-    await Promise.all([userRepository.removeCurrentUser(), bookingRepository.clearCurrentBooking()]);
+    await Promise.all([sessionRepository.clearSession(), bookingRepository.clearCurrentBooking()]);
+    setCurrentAccount(null);
     setCurrentUser(null);
     setCurrentBooking(null);
   }
 
   async function resetLocalData() {
     await Promise.all([
-      userRepository.removeCurrentUser(),
+      sessionRepository.clearSession(),
+      userAccountRepository.clearAll(),
+      userRepository.clearAll(),
       bookingRepository.clearCurrentBooking(),
       rideHistoryRepository.clearAll(),
       ratingRepository.clearAll(),
     ]);
+    setCurrentAccount(null);
     setCurrentUser(null);
     setCurrentBooking(null);
   }
@@ -75,10 +109,12 @@ export function AppProvider({ children }: PropsWithChildren) {
   return (
     <AppContext.Provider
       value={{
+        currentAccount,
         currentUser,
         currentBooking,
         isHydrated,
-        saveUser,
+        register,
+        login,
         updateUser,
         saveBooking,
         clearBooking,

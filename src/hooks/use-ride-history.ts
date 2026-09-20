@@ -37,13 +37,13 @@ export function useRideHistory() {
     }
 
     rideHistoryRepository
-      .listByUser(currentUser.id)
+      .listByUser(currentUser.userId)
       .then((histories) =>
         Promise.all(
           histories.map(async (history) => ({
             history,
             ride: await ridesRepository.getRideById(history.rideId),
-            rating: await ratingRepository.getByRideAndUser(history.rideId, currentUser.id),
+            rating: await ratingRepository.getByRideAndUser(history.rideId, currentUser.userId),
           })),
         ),
       )

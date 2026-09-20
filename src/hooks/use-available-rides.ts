@@ -27,7 +27,7 @@ export function useAvailableRides() {
 
     Promise.all([
       ridesRepository.listAvailableRides(),
-      rideHistoryRepository.listByUser(currentUser.id),
+      rideHistoryRepository.listByUser(currentUser.userId),
     ])
       .then(([loadedRides, histories]) => {
         const completedRideIds = new Set(histories.map((history) => history.rideId));

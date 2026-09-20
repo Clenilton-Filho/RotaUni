@@ -28,7 +28,7 @@ export function useRating(rideId: string | undefined) {
     }
 
     ratingRepository
-      .getByRideAndUser(rideId, currentUser.id)
+      .getByRideAndUser(rideId, currentUser.userId)
       .then((storedRating) => {
         if (isMounted) setRating(storedRating);
       })
@@ -51,8 +51,8 @@ export function useRating(rideId: string | undefined) {
     }
 
     const hasActiveBooking =
-      currentBooking?.rideId === rideId && currentBooking?.userId === currentUser.id;
-    const histories = await rideHistoryRepository.listByUser(currentUser.id);
+      currentBooking?.rideId === rideId && currentBooking?.userId === currentUser.userId;
+    const histories = await rideHistoryRepository.listByUser(currentUser.userId);
     const hasCompletedRide = histories.some((history) => history.rideId === rideId);
 
     if (!rideId || (!hasActiveBooking && !hasCompletedRide)) {
@@ -77,7 +77,7 @@ export function useRating(rideId: string | undefined) {
         id: `${Date.now()}`,
         rideId,
         driverId: ride.driver.id,
-        userId: currentUser.id,
+        userId: currentUser.userId,
         stars,
         createdAt: new Date().toISOString(),
       });
