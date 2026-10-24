@@ -2,11 +2,16 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/app-button';
+import { InfoBadge } from '@/components/info-badge';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { UserAvatar } from '@/components/user-avatar';
 import { useRating } from '@/hooks/use-rating';
 import { useRide } from '@/hooks/use-ride';
 import { useRideHistory } from '@/hooks/use-ride-history';
+import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 
 export default function HistoryRideDetailsScreen() {
@@ -16,6 +21,7 @@ export default function HistoryRideDetailsScreen() {
   const { ride, isLoading: isRideLoading } = useRide(rideId);
   const { entries, isLoading: isHistoryLoading } = useRideHistory();
   const { rating } = useRating(rideId);
+  const theme = useTheme();
 
   const historyEntry = entries.find((entry) => entry.history.rideId === rideId);
 
@@ -31,38 +37,48 @@ export default function HistoryRideDetailsScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <Pressable onPress={() => router.back()}>
-            <ThemedText type="linkPrimary">‹ Voltar</ThemedText>
-          </Pressable>
-          <ThemedText type="subtitle">Carona finalizada</ThemedText>
-          <ThemedText themeColor="textSecondary">Esta experiência já foi registrada no histórico.</ThemedText>
+          <ScreenHeader
+            title="Carona finalizada"
+            subtitle="Esta experiência já foi registrada no histórico."
+            onBack={() => router.back()}
+          />
 
-          <ThemedView type="backgroundElement" style={styles.card}>
-            <ThemedText type="smallBold">{ride.driver.name}</ThemedText>
-            <ThemedText>★ {ride.driver.rating.toFixed(1)} no perfil do motorista</ThemedText>
-            <ThemedText>{ride.vehicle} • {ride.vehicleColor}</ThemedText>
-            <ThemedText>Origem: {currentUser.campus}</ThemedText>
-            <ThemedText>Destino: {ride.destination}</ThemedText>
-            <ThemedText>Saída: {ride.departureTime}</ThemedText>
-            <ThemedText>
-              {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
-            </ThemedText>
+          <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.backgroundSelected }]}>
+            <View style={styles.driverRow}>
+              <UserAvatar name={ride.driver.name} />
+              <View style={styles.driverInfo}>
+                <ThemedText type="smallBold" style={styles.driverName}>
+                  {ride.driver.name}
+                </ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  ★ {ride.driver.rating.toFixed(1)} no perfil do motorista
+                </ThemedText>
+              </View>
+            </View>
+            <View style={styles.details}>
+              <ThemedText>{ride.vehicle} • {ride.vehicleColor}</ThemedText>
+              <ThemedText>Origem: {currentUser.campus}</ThemedText>
+              <ThemedText>Destino: {ride.destination}</ThemedText>
+              <ThemedText>Saída: {ride.departureTime}</ThemedText>
+              <ThemedText style={styles.price}>
+                {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
+              </ThemedText>
+            </View>
+
+            {rating ? (
+              <InfoBadge label={`✓ Motorista avaliado (${rating.stars}/5)`} tone="accent" />
+            ) : (
+              <AppButton
+                title="Avaliar motorista"
+                onPress={() =>
+                  router.push({
+                    pathname: '/avaliar-carona/[rideId]',
+                    params: { rideId },
+                  } as unknown as Href)
+                }
+              />
+            )}
           </ThemedView>
-
-          {rating ? (
-            <ThemedText style={styles.rated}>✓ Motorista avaliado ({rating.stars}/5)</ThemedText>
-          ) : (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: '/avaliar-carona/[rideId]',
-                  params: { rideId },
-                } as unknown as Href)
-              }
-              style={styles.button}>
-              <ThemedText style={styles.buttonText}>Avaliar motorista</ThemedText>
-            </Pressable>
-          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -90,10 +106,12 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { padding: 20, gap: 18 },
-  card: { gap: 7, padding: 18, borderRadius: 10 },
-  button: { alignItems: 'center', backgroundColor: '#208AEF', borderRadius: 8, padding: 15 },
-  buttonText: { color: '#FFFFFF', fontWeight: '700' },
-  rated: { color: '#18794E', fontWeight: '700', textAlign: 'center' },
+  content: { paddingBottom: 32, gap: 14 },
+  card: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  driverInfo: { flex: 1, gap: 3 },
+  driverName: { fontSize: 16, lineHeight: 22 },
+  details: { gap: 5 },
+  price: { fontWeight: '700' },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

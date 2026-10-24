@@ -1,8 +1,10 @@
 import { Link, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/app-button';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAppState } from '@/state/app-provider';
@@ -49,43 +51,40 @@ export default function CadastroScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={styles.content}
+            contentContainerStyle={styles.contentWrapper}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <ThemedText type="title">Bem-vindo à RotaUni</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              Crie seu perfil para começar a encontrar caronas universitárias.
-            </ThemedText>
-          </View>
+            <ScreenHeader title="Criar conta" subtitle="Crie seu perfil para começar a encontrar caronas universitárias." />
+            <View style={styles.content}>
+              <Field label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
+              <Field label="Email" value={email} onChangeText={setEmail} placeholder="seu@email.com" keyboardType="email-address" />
+              <Field label="Senha" value={password} onChangeText={setPassword} placeholder="Mínimo de 8 caracteres" secureTextEntry />
+              <Field label="Confirmar senha" value={passwordConfirmation} onChangeText={setPasswordConfirmation} placeholder="Repita sua senha" secureTextEntry />
+              <Field
+                label="Faculdade"
+                value={university}
+                onChangeText={setUniversity}
+                placeholder="Nome da faculdade"
+              />
+              <Field
+                label="Campus"
+                value={campus}
+                onChangeText={setCampus}
+                placeholder="Seu campus"
+              />
 
-          <View style={styles.form}>
-            <Field label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
-            <Field label="Email" value={email} onChangeText={setEmail} placeholder="seu@email.com" keyboardType="email-address" />
-            <Field label="Senha" value={password} onChangeText={setPassword} placeholder="Mínimo de 8 caracteres" secureTextEntry />
-            <Field label="Confirmar senha" value={passwordConfirmation} onChangeText={setPasswordConfirmation} placeholder="Repita sua senha" secureTextEntry />
-            <Field
-              label="Faculdade"
-              value={university}
-              onChangeText={setUniversity}
-              placeholder="Nome da faculdade"
-            />
-            <Field
-              label="Campus"
-              value={campus}
-              onChangeText={setCampus}
-              placeholder="Seu campus"
-            />
+              {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
 
-            {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
-
-            <Pressable style={styles.button} onPress={handleSubmit}>
-              <ThemedText style={styles.buttonText}>Continuar</ThemedText>
-            </Pressable>
-            <Link href={'/login' as Href} asChild>
-              <Pressable><ThemedText type="linkPrimary">Já tenho uma conta</ThemedText></Pressable>
-            </Link>
-          </View>
+              <AppButton title="Continuar" onPress={handleSubmit} />
+              <View style={styles.signupRow}>
+                <Text style={styles.signupLine}>Já tem uma conta?</Text>
+                <Link href={'/login' as Href} asChild>
+                  <Pressable accessibilityRole="link" hitSlop={8}>
+                    <Text style={styles.signupLink}>Entrar</Text>
+                  </Pressable>
+                </Link>
+              </View>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -105,7 +104,7 @@ type FieldProps = {
 function Field({ label, value, placeholder, onChangeText, secureTextEntry, keyboardType }: FieldProps) {
   return (
     <View style={styles.field}>
-      <ThemedText type="smallBold">{label}</ThemedText>
+      <ThemedText themeColor="textSecondary">{label}</ThemedText>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -113,7 +112,7 @@ function Field({ label, value, placeholder, onChangeText, secureTextEntry, keybo
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize="none"
-        placeholderTextColor="#737373"
+        placeholderTextColor="#9AA3B2"
         style={styles.input}
       />
     </View>
@@ -124,21 +123,22 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   keyboardAvoidingView: { flex: 1 },
-  content: { flexGrow: 1, padding: 24, gap: 32 },
-  header: { gap: 12 },
-  form: { gap: 20 },
+  contentWrapper: { flexGrow: 1, gap: 24 },
+  content: { flex: 1, padding: 20, gap: 18 },
   field: { gap: 8 },
   input: {
     borderWidth: 1,
-    borderColor: '#A0A0A0',
-    borderRadius: 8,
+    borderColor: '#E5E8EE',
+    borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingVertical: 14,
     fontSize: 16,
-    color: '#000000',
+    lineHeight: 21,
+    color: '#233049',
     backgroundColor: '#FFFFFF',
   },
   error: { color: '#B42318' },
-  button: { alignItems: 'center', backgroundColor: '#208AEF', borderRadius: 8, padding: 15 },
-  buttonText: { color: '#FFFFFF', fontWeight: '700' },
+  signupRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingBottom: 8 },
+  signupLine: { color: '#6E7A8A', fontSize: 15, lineHeight: 21 },
+  signupLink: { color: '#C2410C', fontWeight: '700', fontSize: 15, lineHeight: 21 },
 });

@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/app-button';
+import { ScreenHeader } from '@/components/screen-header';
+import { UserAvatar } from '@/components/user-avatar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { type RatingStars } from '@/domain/rating/rating.types';
@@ -43,6 +46,7 @@ export default function RateRideScreen() {
 
   const displayedStars = selectedStars ?? rating?.stars ?? null;
   const isAlreadyRated = rating !== null;
+  const driverFirstName = ride.driver.name.trim().split(/\s+/)[0];
 
   async function handleSubmit() {
     if (!displayedStars || isAlreadyRated) return;
@@ -61,26 +65,23 @@ export default function RateRideScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <Pressable accessibilityRole="button" onPress={() => router.back()}>
-            <ThemedText type="linkPrimary">‹ Voltar</ThemedText>
-          </Pressable>
-
-          <View style={styles.header}>
-            <ThemedText type="subtitle" style={styles.title}>Avaliar motorista</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              Registre sua avaliação para esta carona.
-            </ThemedText>
-          </View>
-
-          <ThemedView type="backgroundElement" style={styles.summary}>
-            <ThemedText type="smallBold">{ride.driver.name}</ThemedText>
-            <ThemedText>{ride.vehicle} • {ride.vehicleColor}</ThemedText>
-            <ThemedText>Destino: {ride.destination}</ThemedText>
-            <ThemedText>Origem: {currentUser.campus}</ThemedText>
-          </ThemedView>
+          <ScreenHeader
+            title="Avaliar motorista"
+            subtitle={`Carona até ${ride.destination}`}
+            onBack={() => router.back()}
+          />
 
           <View style={styles.ratingSection}>
-            <ThemedText type="smallBold">Sua avaliação</ThemedText>
+            <UserAvatar name={ride.driver.name} size={72} />
+            <ThemedText type="subtitle" style={styles.question}>
+              Como foi a carona com {driverFirstName}?
+            </ThemedText>
+            <View style={styles.summaryRow}>
+              <ThemedText themeColor="textSecondary">
+                {ride.vehicle} • {ride.vehicleColor} • Origem: {currentUser.campus}
+              </ThemedText>
+            </View>
+
             <View style={styles.stars}>
               {starOptions.map((star) => {
                 const isSelected = displayedStars !== null && star <= displayedStars;
@@ -104,18 +105,11 @@ export default function RateRideScreen() {
             ) : null}
           </View>
 
-          <Pressable
-            accessibilityRole="button"
+          <AppButton
+            title={isSubmitting ? 'Enviando...' : isAlreadyRated ? 'Avaliação registrada' : 'Enviar avaliação'}
             disabled={displayedStars === null || isAlreadyRated || isSubmitting}
             onPress={handleSubmit}
-            style={[
-              styles.submitButton,
-              (displayedStars === null || isAlreadyRated || isSubmitting) && styles.disabledButton,
-            ]}>
-            <ThemedText style={styles.submitText}>
-              {isSubmitting ? 'Enviando...' : isAlreadyRated ? 'Avaliação registrada' : 'Enviar avaliação'}
-            </ThemedText>
-          </Pressable>
+          />
           {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
@@ -144,18 +138,14 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { padding: 20, gap: 18 },
-  header: { gap: 6 },
-  title: { fontSize: 28, lineHeight: 36 },
-  summary: { gap: 7, padding: 18, borderRadius: 10 },
-  ratingSection: { gap: 10, alignItems: 'center', paddingVertical: 8 },
-  stars: { flexDirection: 'row', gap: 10 },
-  star: { color: '#A0A0A0', fontSize: 38, lineHeight: 44 },
-  selectedStar: { color: '#B76E00' },
-  submitButton: { alignItems: 'center', backgroundColor: '#208AEF', borderRadius: 8, padding: 15 },
-  disabledButton: { backgroundColor: '#A0A0A0' },
-  submitText: { color: '#FFFFFF', fontWeight: '700' },
+  content: { paddingBottom: 32, gap: 14 },
+  ratingSection: { alignItems: 'center', gap: 12, paddingVertical: 16, marginHorizontal: 20 },
+  question: { fontSize: 20, lineHeight: 26, textAlign: 'center' },
+  summaryRow: { alignItems: 'center' },
+  stars: { flexDirection: 'row', gap: 12, paddingVertical: 8 },
+  star: { color: '#C7CEDB', fontSize: 40, lineHeight: 48 },
+  selectedStar: { color: '#C2410C' },
   evaluatedText: { color: '#18794E', fontWeight: '700' },
-  error: { color: '#B42318' },
+  error: { color: '#B42318', marginHorizontal: 20 },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

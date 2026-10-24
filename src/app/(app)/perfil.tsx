@@ -1,22 +1,28 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/app-button';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { UserAvatar } from '@/components/user-avatar';
+import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
+import { confirmAlert } from '@/utils/confirm-alert';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { currentAccount, currentUser, logout, resetLocalData } = useAppState();
+  const theme = useTheme();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   if (!currentUser) return null;
 
   function confirmLogout() {
-    Alert.alert('Sair da conta', 'O usuário e a reserva atual serão removidos deste aparelho.', [
+    confirmAlert('Sair da conta', 'O usuário e a reserva atual serão removidos deste aparelho.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Sair',
@@ -31,7 +37,7 @@ export default function ProfileScreen() {
   }
 
   function confirmResetLocalData() {
-    Alert.alert(
+    confirmAlert(
       'Resetar dados locais',
       'Isso removerá usuário, reserva, histórico e avaliações deste protótipo.',
       [
@@ -53,46 +59,44 @@ export default function ProfileScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <Pressable onPress={() => router.back()}>
-            <ThemedText type="linkPrimary">‹ Voltar</ThemedText>
-          </Pressable>
-          <ThemedText type="subtitle">Perfil</ThemedText>
-          <ThemedView type="backgroundElement" style={styles.card}>
-            <View style={styles.row}>
-              <ThemedText type="smallBold">Nome</ThemedText>
-              <ThemedText>{currentUser.name}</ThemedText>
+          <ScreenHeader title="Perfil" />
+
+          <View style={styles.profileRow}>
+            <UserAvatar name={currentUser.name} size={64} />
+            <View style={styles.profileInfo}>
+              <ThemedText type="smallBold" style={styles.profileName}>
+                {currentUser.name}
+              </ThemedText>
+              <ThemedText themeColor="textSecondary">
+                {currentUser.university} • {currentUser.campus}
+              </ThemedText>
             </View>
-            <View style={styles.row}>
-              <ThemedText type="smallBold">Faculdade</ThemedText>
-              <ThemedText>{currentUser.university}</ThemedText>
-            </View>
-            <View style={styles.row}>
-              <ThemedText type="smallBold">Campus</ThemedText>
-              <ThemedText>{currentUser.campus}</ThemedText>
-            </View>
-          </ThemedView>
-          <ThemedView type="backgroundElement" style={styles.card}>
+          </View>
+
+          <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.backgroundSelected }]}>
             <View style={styles.row}>
               <ThemedText type="smallBold">Email</ThemedText>
               <ThemedText>{currentAccount?.email}</ThemedText>
             </View>
           </ThemedView>
-          <Pressable disabled={isLoggingOut} onPress={confirmLogout} style={styles.logoutButton}>
-            <ThemedText style={styles.logoutText}>{isLoggingOut ? 'Saindo...' : 'Sair da conta'}</ThemedText>
-          </Pressable>
-          <ThemedView type="backgroundElement" style={styles.developmentSection}>
+
+          <AppButton
+            title={isLoggingOut ? 'Saindo...' : 'Sair da conta'}
+            variant="outline"
+            disabled={isLoggingOut}
+            onPress={confirmLogout}
+          />
+
+          <ThemedView type="backgroundElement" style={[styles.developmentSection, { borderColor: theme.accentSoft }]}>
             <ThemedText style={styles.developmentTitle}>Desenvolvimento</ThemedText>
             <ThemedText themeColor="textSecondary">
               Ferramentas para limpar o estado local durante os testes.
             </ThemedText>
-            <Pressable
+            <AppButton
+              title={isResetting ? 'Resetando...' : 'Resetar dados locais'}
               disabled={isResetting}
               onPress={confirmResetLocalData}
-              style={styles.resetButton}>
-              <ThemedText style={styles.resetText}>
-                {isResetting ? 'Resetando...' : 'Resetar dados locais'}
-              </ThemedText>
-            </Pressable>
+            />
           </ThemedView>
         </ScrollView>
       </SafeAreaView>
@@ -103,13 +107,12 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { padding: 20, gap: 18 },
-  card: { gap: 14, padding: 18, borderRadius: 10 },
+  content: { paddingBottom: 32, gap: 14 },
+  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: 20 },
+  profileInfo: { flex: 1, gap: 4 },
+  profileName: { fontSize: 18, lineHeight: 24 },
+  card: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
   row: { gap: 4 },
-  logoutButton: { alignItems: 'center', padding: 14 },
-  logoutText: { color: '#B42318', fontWeight: '700' },
-  developmentSection: { gap: 10, padding: 16, borderRadius: 10, borderWidth: 1, borderColor: '#B42318' },
-  developmentTitle: { color: '#B42318', fontWeight: '700' },
-  resetButton: { alignItems: 'center', padding: 12, borderRadius: 8, backgroundColor: '#B42318' },
-  resetText: { color: '#FFFFFF', fontWeight: '700' },
+  developmentSection: { gap: 10, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
+  developmentTitle: { color: '#95371F', fontWeight: '700' },
 });

@@ -1,13 +1,19 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/app-button';
+import { InfoBadge } from '@/components/info-badge';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { UserAvatar } from '@/components/user-avatar';
 import { useFinalizeRide } from '@/hooks/use-finalize-ride';
 import { useRide } from '@/hooks/use-ride';
+import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
+import { confirmAlert } from '@/utils/confirm-alert';
 
 export default function RideConfirmedScreen() {
   const router = useRouter();
@@ -15,6 +21,7 @@ export default function RideConfirmedScreen() {
   const { clearBooking, currentBooking, currentUser } = useAppState();
   const { ride, isLoading } = useRide(rideId);
   const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
+  const theme = useTheme();
   const [isCancelling, setIsCancelling] = useState(false);
 
   if (!currentUser || !currentBooking || currentBooking.rideId !== rideId) {
@@ -34,42 +41,39 @@ export default function RideConfirmedScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <ThemedText type="subtitle">Carona escolhida</ThemedText>
-            <ThemedText style={styles.confirmation}>
-              Sua escolha foi confirmada localmente.
-            </ThemedText>
-          </View>
+          <ScreenHeader title="Carona escolhida" subtitle="Sua escolha foi confirmada localmente." />
 
-          <ThemedView type="backgroundElement" style={styles.summary}>
-            <ThemedText type="smallBold">{ride.driver.name}</ThemedText>
-            <ThemedText style={styles.rating}>★ {ride.driver.rating.toFixed(1)}</ThemedText>
-            <View style={styles.details}>
-              <ThemedText>
-                {ride.vehicle} • {ride.vehicleColor}
+          <ThemedView type="backgroundElement" style={[styles.summary, { borderColor: theme.backgroundSelected }]}>
+            <InfoBadge label="Confirmada" tone="success" />
+            <View style={styles.driverRow}>
+              <UserAvatar name={ride.driver.name} />
+              <View style={styles.driverInfo}>
+                <ThemedText type="smallBold" style={styles.driverName}>
+                  {ride.driver.name}
+                </ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  {ride.vehicle} • {ride.vehicleColor}
+                </ThemedText>
+              </View>
+              <ThemedText style={[styles.rating, { color: theme.accent }]}>
+                ★ {ride.driver.rating.toFixed(1)}
               </ThemedText>
+            </View>
+            <View style={styles.details}>
               <ThemedText>Saída: {ride.departureTime}</ThemedText>
               <ThemedText>Origem: {currentUser.campus}</ThemedText>
               <ThemedText>Destino: {ride.destination}</ThemedText>
-              <ThemedText type="smallBold">
+              <ThemedText style={styles.price}>
                 {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
               </ThemedText>
             </View>
+            <ThemedText themeColor="textSecondary">
+              Esta é a carona atualmente escolhida para o seu perfil.
+            </ThemedText>
           </ThemedView>
 
-          <ThemedText themeColor="textSecondary">
-            Esta é a carona atualmente escolhida para o seu perfil.
-          </ThemedText>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.replace('/')}
-            style={styles.button}>
-            <ThemedText style={styles.buttonText}>Voltar para a Home</ThemedText>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
+          <AppButton
+            title={isFinalizing ? 'Finalizando...' : 'Finalizar carona'}
             disabled={isFinalizing}
             onPress={async () => {
               const finalized = await finalizeRide();
@@ -80,18 +84,14 @@ export default function RideConfirmedScreen() {
                 } as unknown as Href);
               }
             }}
-            style={styles.finalizeButton}>
-            <ThemedText style={styles.finalizeText}>
-              {isFinalizing ? 'Finalizando...' : 'Finalizar carona'}
-            </ThemedText>
-          </Pressable>
-          {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
+          />
 
-          <Pressable
-            accessibilityRole="button"
+          <AppButton
+            title={isCancelling ? 'Cancelando...' : 'Cancelar reserva'}
             disabled={isCancelling}
+            variant="outline"
             onPress={() => {
-              Alert.alert('Cancelar reserva', 'Deseja cancelar a carona escolhida?', [
+              confirmAlert('Cancelar reserva', 'Deseja cancelar a carona escolhida?', [
                 { text: 'Manter reserva', style: 'cancel' },
                 {
                   text: 'Cancelar reserva',
@@ -104,11 +104,11 @@ export default function RideConfirmedScreen() {
                 },
               ]);
             }}
-            style={styles.cancelButton}>
-            <ThemedText style={styles.cancelText}>
-              {isCancelling ? 'Cancelando...' : 'Cancelar reserva'}
-            </ThemedText>
-          </Pressable>
+          />
+
+          <AppButton title="Voltar para a Home" variant="outline" onPress={() => router.replace('/')} />
+
+          {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -135,18 +135,14 @@ function FeedbackMessage({ message, onBack }: { message: string; onBack?: () => 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { padding: 20, gap: 18 },
-  header: { gap: 6 },
-  confirmation: { color: '#18794E', fontWeight: '700' },
-  summary: { gap: 10, padding: 18, borderRadius: 10 },
-  rating: { color: '#B76E00', fontWeight: '700' },
+  content: { paddingBottom: 32, gap: 14 },
+  summary: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  driverInfo: { flex: 1, gap: 3 },
+  driverName: { fontSize: 16, lineHeight: 22 },
+  rating: { fontWeight: '700', fontSize: 14 },
   details: { gap: 5 },
-  button: { alignItems: 'center', backgroundColor: '#208AEF', borderRadius: 8, padding: 15 },
-  buttonText: { color: '#FFFFFF', fontWeight: '700' },
-  cancelButton: { alignItems: 'center', padding: 12 },
-  cancelText: { color: '#B42318', fontWeight: '700' },
-  finalizeButton: { alignItems: 'center', padding: 12 },
-  finalizeText: { color: '#18794E', fontWeight: '700' },
-  error: { color: '#B42318' },
+  price: { fontWeight: '700' },
+  error: { color: '#B42318', marginHorizontal: 20 },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

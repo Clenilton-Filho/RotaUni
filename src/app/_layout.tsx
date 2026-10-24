@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { AppShell } from '@/components/app-shell';
 import { AppProvider } from '@/state/app-provider';
 
 SplashScreen.preventAutoHideAsync();
@@ -15,8 +16,10 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
         <AppProvider>
-          <AnimatedSplashOverlay />
-          <Stack screenOptions={{ headerShown: false }} />
+          <AppShell>
+            <AnimatedSplashOverlay />
+            <Stack screenOptions={{ headerShown: false }} />
+          </AppShell>
         </AppProvider>
       </SafeAreaProvider>
     </ThemeProvider>

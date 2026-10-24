@@ -1,8 +1,10 @@
 import { router, type Href } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { InfoBadge } from '@/components/info-badge';
 import { RideCard } from '@/components/rides/ride-card';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAvailableRides } from '@/hooks/use-available-rides';
@@ -22,18 +24,15 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <ThemedText type="subtitle">Olá, {currentUser.name}!</ThemedText>
-            <ThemedText themeColor="textSecondary">Saindo de:</ThemedText>
-            <ThemedText type="smallBold">{currentUser.campus}</ThemedText>
-            <View style={styles.headerActions}>
-              <Pressable onPress={() => router.push('/perfil' as Href)}>
-                <ThemedText type="linkPrimary">Perfil</ThemedText>
-              </Pressable>
-              <Pressable onPress={() => router.push('/historico' as Href)}>
-                <ThemedText type="linkPrimary">Histórico</ThemedText>
-              </Pressable>
-            </View>
+          <ScreenHeader title={`Olá, ${currentUser.name}!`} subtitle={`Saindo de: ${currentUser.campus}`} />
+
+          <View style={styles.headerActions}>
+            <Pressable accessibilityRole="link" onPress={() => router.push('/perfil' as Href)}>
+              <Text style={[styles.headerLink, { color: theme.accent }]}>Perfil</Text>
+            </Pressable>
+            <Pressable accessibilityRole="link" onPress={() => router.push('/historico' as Href)}>
+              <Text style={[styles.headerLink, { color: theme.accent }]}>Histórico</Text>
+            </Pressable>
           </View>
 
           {currentBooking && bookedRide ? (
@@ -46,21 +45,20 @@ export default function HomeScreen() {
                 })
               }
               style={styles.currentBookingPressable}>
-              <ThemedView
-                type="backgroundElement"
-                style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
+              <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
+                <InfoBadge label="Confirmada" tone="success" />
                 <ThemedText type="smallBold">Carona escolhida</ThemedText>
                 <ThemedText>
                   {bookedRide.driver.name} • {bookedRide.destination} às {bookedRide.departureTime}
                 </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
+                <ThemedText style={styles.hint} themeColor="textSecondary">
                   Toque para ver os detalhes
                 </ThemedText>
               </ThemedView>
             </Pressable>
           ) : null}
 
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+          <ThemedText style={styles.sectionTitle}>
             Caronas disponíveis
           </ThemedText>
 
@@ -97,13 +95,14 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { padding: 24, gap: 20 },
-  header: { gap: 6 },
-  headerActions: { flexDirection: 'row', gap: 18, marginTop: 8 },
-  currentBookingPressable: { borderRadius: 10 },
-  currentBooking: { gap: 5, padding: 16, borderRadius: 10, borderWidth: 1 },
-  sectionTitle: { fontSize: 24, lineHeight: 32 },
-  ridesList: { gap: 14 },
+  content: { paddingBottom: 32, gap: 20 },
+  headerActions: { flexDirection: 'row', gap: 24, paddingHorizontal: 20, marginTop: -10 },
+  headerLink: { fontWeight: '700', fontSize: 16, lineHeight: 22 },
+  currentBookingPressable: { marginHorizontal: 20, borderRadius: 16 },
+  currentBooking: { gap: 8, padding: 16, borderRadius: 16, borderWidth: 1 },
+  hint: { fontSize: 13, lineHeight: 18 },
+  sectionTitle: { fontSize: 22, lineHeight: 28, fontWeight: '700', paddingHorizontal: 20 },
+  ridesList: { gap: 14, paddingHorizontal: 20 },
   feedback: { alignItems: 'center', gap: 12, paddingVertical: 32 },
-  error: { color: '#B42318' },
+  error: { color: '#B42318', paddingHorizontal: 20 },
 });

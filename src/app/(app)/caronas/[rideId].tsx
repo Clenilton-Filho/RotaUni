@@ -1,10 +1,14 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/app-button';
+import { InfoBadge } from '@/components/info-badge';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { UserAvatar } from '@/components/user-avatar';
 import {
     getRemainingSeats,
     getRideCapacityStatus,
@@ -15,6 +19,7 @@ import { useRide } from '@/hooks/use-ride';
 import { useRideHistory } from '@/hooks/use-ride-history';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
+import { confirmAlert } from '@/utils/confirm-alert';
 
 export default function RideDetailsScreen() {
   const router = useRouter();
@@ -22,7 +27,7 @@ export default function RideDetailsScreen() {
   const { clearBooking, currentUser, currentBooking } = useAppState();
   const { ride, isLoading, error } = useRide(rideId);
   const { createBooking, isSaving, error: bookingError } = useCreateBooking();
-    const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
+  const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
   const { entries: historyEntries, isLoading: isHistoryLoading } = useRideHistory();
   const theme = useTheme();
   const [isCancelling, setIsCancelling] = useState(false);
@@ -50,54 +55,80 @@ export default function RideDetailsScreen() {
   const hasCurrentBooking = currentBooking !== null;
   const isSelectedRide = currentBooking?.rideId === ride.id;
   const isFinalizedRide = historyEntries.some((entry) => entry.history.rideId === ride.id);
-  const capacityMessage =
-    status === 'full'
-      ? 'Lotada. Não há vagas disponíveis.'
-      : status === 'almost-full'
-        ? `Quase cheia. Restam ${remainingSeats} vaga.`
-        : `Disponível. Restam ${remainingSeats} vagas.`;
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <Pressable accessibilityRole="button" onPress={() => router.back()}>
-            <ThemedText type="linkPrimary">‹ Voltar</ThemedText>
-          </Pressable>
+          <ScreenHeader
+            title="Detalhes da carona"
+            subtitle={`Saindo de ${currentUser.campus}`}
+            onBack={() => router.back()}
+          />
 
-          <View style={styles.header}>
-            <ThemedText type="subtitle" style={styles.title}>
-              Detalhes da carona
-            </ThemedText>
-            <ThemedText themeColor="textSecondary">Saindo de {currentUser.campus}</ThemedText>
+          <SectionCard>
+            <View style={styles.driverRow}>
+              <UserAvatar name={ride.driver.name} />
+              <View style={styles.driverInfo}>
+                <ThemedText type="smallBold" style={styles.driverName}>
+                  {ride.driver.name}
+                </ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  {ride.vehicle} • {ride.vehicleColor}
+                </ThemedText>
+              </View>
+              <ThemedText style={[styles.driverRating, { color: theme.accent }]}>
+                ★ {ride.driver.rating.toFixed(1)}
+              </ThemedText>
+            </View>
+          </SectionCard>
+
+          {isSelectedRide ? (
+            <View style={styles.confirmBadgeRow}>
+              <InfoBadge label="Confirmada" tone="success" />
+            </View>
+          ) : null}
+
+          <SectionCard>
+            <ThemedText type="smallBold">Saída: {ride.departureTime}</ThemedText>
+            <View style={styles.routeList}>
+              <View style={styles.routeItem}>
+                <View style={[styles.routeDot, { backgroundColor: theme.primary }]} />
+                <ThemedText style={styles.routeLabel}>
+                  Origem: {currentUser.campus}
+                </ThemedText>
+              </View>
+              <View style={[styles.routeConnector, { backgroundColor: theme.primary }]} />
+              <View style={styles.routeItem}>
+                <View style={[styles.routeDot, { backgroundColor: theme.accent }]} />
+                <ThemedText style={styles.routeLabel}>
+                  Destino: {ride.destination}
+                </ThemedText>
+              </View>
+            </View>
+          </SectionCard>
+
+          <View style={styles.statsRow}>
+            <SectionCard style={styles.statCard}>
+              <ThemedText themeColor="textSecondary">Vagas</ThemedText>
+              <ThemedText type="subtitle">{remainingSeats}</ThemedText>
+              <ThemedText themeColor="textSecondary" style={styles.statCaption}>
+                {status === 'full'
+                  ? 'Lotada. Não há vagas disponíveis.'
+                  : status === 'almost-full'
+                    ? `Quase cheia. ${remainingSeats} vaga restante.`
+                    : 'Disponível.'}
+              </ThemedText>
+            </SectionCard>
+            <SectionCard style={styles.statCard}>
+              <ThemedText themeColor="textSecondary">Valor</ThemedText>
+              <ThemedText type="subtitle">
+                {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
+              </ThemedText>
+            </SectionCard>
           </View>
 
-          <DetailSection title="Motorista">
-            <ThemedText type="smallBold">{ride.driver.name}</ThemedText>
-            <ThemedText style={styles.rating}>★ {ride.driver.rating.toFixed(1)}</ThemedText>
-          </DetailSection>
-
-          <DetailSection title="Veículo">
-            <ThemedText>{ride.vehicle}</ThemedText>
-            <ThemedText themeColor="textSecondary">Cor: {ride.vehicleColor}</ThemedText>
-          </DetailSection>
-
-          <DetailSection title="Viagem">
-            <ThemedText>Saída: {ride.departureTime}</ThemedText>
-            <ThemedText>Origem: {currentUser.campus}</ThemedText>
-            <ThemedText>Destino: {ride.destination}</ThemedText>
-          </DetailSection>
-
-          <DetailSection title="Capacidade">
-            <ThemedText>
-              {ride.confirmedPassengers}/{ride.totalCapacity} passageiros confirmados
-            </ThemedText>
-            <ThemedText style={status === 'full' ? styles.fullText : styles.availableText}>
-              {capacityMessage}
-            </ThemedText>
-          </DetailSection>
-
-          <DetailSection title="Passageiros confirmados">
+          <SectionCard title={`Passageiros confirmados (${ride.confirmedPassengers}/${ride.totalCapacity})`}>
             {ride.passengerNames.length > 0 ? (
               ride.passengerNames.map((passengerName) => (
                 <ThemedText key={passengerName}>• {passengerName}</ThemedText>
@@ -105,67 +136,50 @@ export default function RideDetailsScreen() {
             ) : (
               <ThemedText themeColor="textSecondary">Nenhum passageiro confirmado.</ThemedText>
             )}
-          </DetailSection>
-
-          <DetailSection title="Preço">
-            <ThemedText type="smallBold">
-              {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
-            </ThemedText>
-          </DetailSection>
+          </SectionCard>
 
           {isFinalizedRide && !isSelectedRide ? (
             <View style={styles.finalizedAction}>
-              <ThemedText style={styles.finalizedText}>Carona finalizada</ThemedText>
+              <InfoBadge label="Carona finalizada" tone="neutral" />
               <ThemedText themeColor="textSecondary">
                 Esta experiência está disponível no Histórico.
               </ThemedText>
             </View>
           ) : isSelectedRide ? (
             <View style={styles.currentBookingAction}>
-              <ThemedText style={styles.selectedText}>✓ Carona escolhida</ThemedText>
-              <Pressable
-                accessibilityRole="button"
-                disabled={isFinalizing}
-                onPress={async () => {
-                  const finalized = await finalizeRide();
-                  if (finalized) {
-                    router.replace({
-                      pathname: '/carona-finalizada',
-                      params: { rideId },
-                    } as unknown as Href);
-                  }
-                }}
-                style={styles.finalizeButton}>
-                <ThemedText style={styles.finalizeText}>
-                  {isFinalizing ? 'Finalizando...' : 'Finalizar carona'}
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                disabled={isCancelling}
-                onPress={() => {
-                  Alert.alert('Cancelar reserva', 'Deseja cancelar a carona escolhida?', [
-                    { text: 'Manter reserva', style: 'cancel' },
-                    {
-                      text: 'Cancelar reserva',
-                      style: 'destructive',
-                      onPress: async () => {
-                        setIsCancelling(true);
-                        await clearBooking();
-                        router.replace('/');
-                      },
+              <AppButton title={isFinalizing ? 'Finalizando...' : 'Finalizar carona'} disabled={isFinalizing} onPress={async () => {
+                const finalized = await finalizeRide();
+                if (finalized) {
+                  router.replace({
+                    pathname: '/carona-finalizada',
+                    params: { rideId },
+                  } as unknown as Href);
+                }
+              }} />
+              <AppButton title={isCancelling ? 'Cancelando...' : 'Cancelar reserva'} disabled={isCancelling} variant="outline" onPress={() => {
+                confirmAlert('Cancelar reserva', 'Deseja cancelar a carona escolhida?', [
+                  { text: 'Manter reserva', style: 'cancel' },
+                  {
+                    text: 'Cancelar reserva',
+                    style: 'destructive',
+                    onPress: async () => {
+                      setIsCancelling(true);
+                      await clearBooking();
+                      router.replace('/');
                     },
-                  ]);
-                }}
-                style={styles.cancelButton}>
-                <ThemedText style={styles.cancelText}>
-                  {isCancelling ? 'Cancelando...' : 'Cancelar reserva'}
-                </ThemedText>
-              </Pressable>
+                  },
+                ]);
+              }} />
             </View>
           ) : (
-            <Pressable
-              accessibilityRole="button"
+            <AppButton
+              title={status === 'full'
+                ? 'Sem vagas'
+                : hasCurrentBooking
+                  ? 'Você já possui uma carona escolhida'
+                  : isSaving
+                    ? 'Salvando escolha...'
+                    : 'Escolher esta carona'}
               disabled={status === 'full' || hasCurrentBooking || isSaving}
               onPress={async () => {
                 const wasCreated = await createBooking(ride.id);
@@ -176,21 +190,7 @@ export default function RideDetailsScreen() {
                   } as unknown as Href);
                 }
               }}
-              style={[
-                styles.actionButton,
-                { shadowColor: theme.text },
-                (status === 'full' || hasCurrentBooking || isSaving) && styles.disabledButton,
-              ]}>
-              <ThemedText style={styles.actionText}>
-                {status === 'full'
-                  ? 'Sem vagas'
-                  : isSaving
-                    ? 'Salvando escolha...'
-                    : hasCurrentBooking
-                      ? 'Você já possui uma carona escolhida'
-                      : 'Escolher esta carona'}
-              </ThemedText>
-            </Pressable>
+            />
           )}
           {bookingError ? <ThemedText style={styles.error}>{bookingError}</ThemedText> : null}
           {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
@@ -200,14 +200,14 @@ export default function RideDetailsScreen() {
   );
 }
 
-function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionCard({ title, children, style }: { title?: string; children: React.ReactNode; style?: object }) {
   const theme = useTheme();
 
   return (
     <ThemedView
       type="backgroundElement"
-      style={[styles.section, { borderColor: theme.backgroundSelected }]}>
-      <ThemedText type="smallBold">{title}</ThemedText>
+      style={[styles.section, style ?? {}, { borderColor: theme.backgroundSelected }]}>
+      {title ? <ThemedText type="smallBold">{title}</ThemedText> : null}
       <View style={styles.sectionContent}>{children}</View>
     </ThemedView>
   );
@@ -223,7 +223,7 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
           {showActivity ? <ActivityIndicator /> : null}
           <ThemedText themeColor="textSecondary">{message}</ThemedText>
           <Pressable accessibilityRole="button" onPress={() => router.back()}>
-            <ThemedText type="linkPrimary">‹ Voltar para a Home</ThemedText>
+            <ThemedText type="linkPrimary">‹ Voltar para a listagem</ThemedText>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -234,41 +234,33 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { padding: 20, gap: 14 },
-  header: { gap: 4, paddingBottom: 4 },
-  title: { fontSize: 28, lineHeight: 36 },
+  content: { paddingBottom: 32, gap: 14 },
   section: {
-    gap: 10,
+    gap: 8,
     padding: 16,
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#D7D9DE',
+    marginHorizontal: 20,
   },
-  sectionContent: { gap: 5 },
-  rating: { color: '#B76E00', fontWeight: '700' },
-  availableText: { color: '#18794E', fontWeight: '700' },
-  fullText: { color: '#B42318', fontWeight: '700' },
-  actionButton: {
-    alignItems: 'center',
-    backgroundColor: '#208AEF',
-    borderRadius: 8,
-    padding: 15,
-    marginTop: 2,
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  sectionContent: { gap: 6 },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  driverInfo: { flex: 1, gap: 3 },
+  driverName: { fontSize: 16, lineHeight: 22 },
+  driverRating: { fontWeight: '700', fontSize: 14 },
+  routeList: { gap: 0 },
+  routeItem: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  routeDot: { width: 14, height: 14, borderRadius: 7 },
+  routeConnector: { width: 3, height: 22, marginLeft: 5.5, borderRadius: 2 },
+  routeLabel: {
+    fontWeight: '700',
+    flex: 1,
   },
-  disabledButton: { backgroundColor: '#A0A0A0' },
-  actionText: { color: '#FFFFFF', fontWeight: '700' },
-  currentBookingAction: { alignItems: 'center', gap: 10, paddingVertical: 4 },
-  selectedText: { color: '#18794E', fontWeight: '700' },
-  finalizeButton: { alignItems: 'center', padding: 12 },
-  finalizeText: { color: '#18794E', fontWeight: '700' },
-  finalizedAction: { alignItems: 'center', gap: 6, paddingVertical: 8 },
-  finalizedText: { color: '#18794E', fontWeight: '700' },
-  cancelButton: { alignItems: 'center', padding: 12 },
-  cancelText: { color: '#B42318', fontWeight: '700' },
-  error: { color: '#B42318' },
+  confirmBadgeRow: { marginHorizontal: 20 },
+  statsRow: { flexDirection: 'row', gap: 14, marginHorizontal: 20 },
+  statCard: { flex: 1, marginHorizontal: 0 },
+  statCaption: { fontSize: 13, lineHeight: 18 },
+  finalizedAction: { alignItems: 'center', gap: 8, paddingVertical: 8, marginHorizontal: 20 },
+  currentBookingAction: { gap: 12, marginHorizontal: 20 },
+  error: { color: '#B42318', marginHorizontal: 20 },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

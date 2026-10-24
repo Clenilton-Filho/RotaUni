@@ -1,7 +1,10 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { InfoBadge } from '@/components/info-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { UserAvatar } from '@/components/user-avatar';
+import { useTheme } from '@/hooks/use-theme';
 import {
     getRemainingSeats,
     getRideCapacityStatus,
@@ -14,48 +17,33 @@ type RideCardProps = {
 };
 
 export function RideCard({ ride, onPress }: RideCardProps) {
+  const theme = useTheme();
   const status = getRideCapacityStatus(ride);
   const remainingSeats = getRemainingSeats(ride);
-  const statusLabel = {
-    available: 'Disponível',
-    'almost-full': 'Quase cheia',
-    full: 'Lotada',
-  }[status];
 
   const card = (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.driverInfo}>
-          <ThemedText type="smallBold">{ride.driver.name}</ThemedText>
-          <ThemedText style={styles.rating}>★ {ride.driver.rating.toFixed(1)}</ThemedText>
-        </View>
-        <ThemedText style={[styles.status, status === 'full' && styles.fullStatus]}>
-          {statusLabel}
+    <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.backgroundSelected }]}>
+      <UserAvatar name={ride.driver.name} />
+
+      <View style={styles.info}>
+        <ThemedText type="smallBold" style={styles.driverName}>
+          {ride.driver.name}
+        </ThemedText>
+        <ThemedText themeColor="textSecondary">
+          {ride.vehicle} • {ride.vehicleColor}
+        </ThemedText>
+        <ThemedText themeColor="textSecondary" style={styles.detail}>
+          {ride.destination} • Saída {ride.departureTime} • {remainingSeats === 1 ? '1 vaga' : `${remainingSeats} vagas`}
         </ThemedText>
       </View>
 
-      <ThemedText themeColor="textSecondary">
-        {ride.vehicle} • {ride.vehicleColor}
-      </ThemedText>
-
-      <View style={styles.details}>
-        <ThemedText>Saída {ride.departureTime}</ThemedText>
-        <ThemedText>Destino: {ride.destination}</ThemedText>
-        <ThemedText>
-          Passageiros: {ride.confirmedPassengers}/{ride.totalCapacity}
-          {status !== 'full' ? ` • ${remainingSeats} ${remainingSeats === 1 ? 'vaga' : 'vagas'}` : ''}
-        </ThemedText>
-      </View>
-
-      <View style={styles.footer}>
-        <ThemedText type="smallBold">
+      <View style={styles.right}>
+        <ThemedText style={styles.time}>{ride.departureTime}</ThemedText>
+        <ThemedText style={[styles.price, { color: theme.accent }]}>
           {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
         </ThemedText>
-        {status === 'full' ? (
-          <ThemedText themeColor="textSecondary" type="small">
-            Sem vagas para escolha
-          </ThemedText>
-        ) : null}
+        {status === 'full' ? <InfoBadge label="Lotada" tone="accent" /> : null}
+        {status === 'almost-full' ? <InfoBadge label="Quase cheia" tone="accent" /> : null}
       </View>
     </ThemedView>
   );
@@ -70,22 +58,29 @@ export function RideCard({ ride, onPress }: RideCardProps) {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 12, padding: 18, borderRadius: 12 },
-  header: {
+  card: {
     flexDirection: 'row',
+    gap: 14,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
   },
-  driverInfo: { gap: 4, flex: 1 },
-  rating: { color: '#B76E00', fontWeight: '700' },
-  status: { color: '#18794E', fontSize: 13, fontWeight: '700' },
-  fullStatus: { color: '#B42318' },
-  details: { gap: 4 },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
+  info: { flex: 1, gap: 4 },
+  driverName: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  detail: { fontSize: 13, lineHeight: 18 },
+  right: { alignItems: 'flex-end', gap: 4 },
+  time: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+  price: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
   },
 });

@@ -7,3 +7,14 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+/* Page background behind the 460px web column, synced with Colors (theme.ts). */
+body {
+  background-color: #F4F7FC;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #171A21;
+  }
+}
