@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
+import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { UserAvatar } from '@/components/user-avatar';
 import { ThemedText } from '@/components/themed-text';
@@ -26,7 +27,7 @@ export default function RateRideScreen() {
   const [selectedStars, setSelectedStars] = useState<RatingStars | null>(null);
 
   if (!currentUser) {
-    return <FeedbackMessage message="Não há uma reserva válida para avaliar." />;
+    return <FeedbackMessage message="Não há uma reserva válida para avaliar." rideId={rideId} />;
   }
 
   if (isRideLoading || isRatingLoading || isHistoryLoading) {
@@ -37,11 +38,11 @@ export default function RateRideScreen() {
   const hasCompletedRide = entries.some((entry) => entry.history.rideId === rideId);
 
   if (!hasActiveBooking && !hasCompletedRide) {
-    return <FeedbackMessage message="Não há uma reserva válida para avaliar." />;
+    return <FeedbackMessage message="Não há uma reserva válida para avaliar." rideId={rideId} />;
   }
 
   if (!ride) {
-    return <FeedbackMessage message="Carona não encontrada." />;
+    return <FeedbackMessage message="Carona não encontrada." rideId={rideId} />;
   }
 
   const displayedStars = selectedStars ?? rating?.stars ?? null;
@@ -64,11 +65,11 @@ export default function RateRideScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <ScreenHeader
             title="Avaliar motorista"
             subtitle={`Carona até ${ride.destination}`}
-            onBack={() => router.back()}
+            fallbackHref={`/carona-finalizada?rideId=${rideId}`}
           />
 
           <View style={styles.ratingSection}>
@@ -112,12 +113,22 @@ export default function RateRideScreen() {
           />
           {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
         </ScrollView>
+
+        <PersistentTabBar activeTab="caronas" />
       </SafeAreaView>
     </ThemedView>
   );
 }
 
-function FeedbackMessage({ message, showActivity = false }: { message: string; showActivity?: boolean }) {
+function FeedbackMessage({
+  message,
+  showActivity = false,
+  rideId,
+}: {
+  message: string;
+  showActivity?: boolean;
+  rideId?: string;
+}) {
   const router = useRouter();
 
   return (
@@ -126,7 +137,18 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
         <View style={styles.feedback}>
           {showActivity ? <ActivityIndicator /> : null}
           <ThemedText themeColor="textSecondary">{message}</ThemedText>
-          <Pressable accessibilityRole="button" onPress={() => router.back()}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace({
+                  pathname: '/carona-finalizada',
+                  params: rideId ? { rideId } : {},
+                } as unknown as Href);
+              }
+            }}>
             <ThemedText type="linkPrimary">Voltar</ThemedText>
           </Pressable>
         </View>
@@ -138,7 +160,8 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { paddingBottom: 32, gap: 14 },
+  scroll: { flex: 1 },
+  content: { paddingBottom: 12, gap: 14 },
   ratingSection: { alignItems: 'center', gap: 12, paddingVertical: 16, marginHorizontal: 20 },
   question: { fontSize: 20, lineHeight: 26, textAlign: 'center' },
   summaryRow: { alignItems: 'center' },

@@ -1,5 +1,5 @@
-import { router, type Href } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View, Text } from 'react-native';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InfoBadge } from '@/components/info-badge';
@@ -25,15 +25,6 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader title={`Olá, ${currentUser.name}!`} subtitle={`Saindo de: ${currentUser.campus}`} />
-
-          <View style={styles.headerActions}>
-            <Pressable accessibilityRole="link" onPress={() => router.push('/perfil' as Href)}>
-              <Text style={[styles.headerLink, { color: theme.accent }]}>Perfil</Text>
-            </Pressable>
-            <Pressable accessibilityRole="link" onPress={() => router.push('/historico' as Href)}>
-              <Text style={[styles.headerLink, { color: theme.accent }]}>Histórico</Text>
-            </Pressable>
-          </View>
 
           {currentBooking && bookedRide ? (
             <Pressable
@@ -96,8 +87,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   content: { paddingBottom: 32, gap: 20 },
-  headerActions: { flexDirection: 'row', gap: 24, paddingHorizontal: 20, marginTop: -10 },
-  headerLink: { fontWeight: '700', fontSize: 16, lineHeight: 22 },
   currentBookingPressable: { marginHorizontal: 20, borderRadius: 16 },
   currentBooking: { gap: 8, padding: 16, borderRadius: 16, borderWidth: 1 },
   hint: { fontSize: 13, lineHeight: 18 },

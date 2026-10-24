@@ -118,6 +118,22 @@ storage keys.
 
 Application code should preferably use the storage abstraction instead of accessing AsyncStorage directly.
 
+Navigation structure
+
+Expo Router route groups:
+
+- (app): authenticated tab area. Three tabs (Caronas / Histórico / Perfil) rendered by the classic Tabs navigator. The tab bar is text-only, with an accent indicator on the active tab and no icons.
+- (flows): secondary screens (ride details, booking confirmation, ride finalization, driver rating, profile editing). Keeping them outside the tab group pushes them on the root stack; the tab bar of the navigator is restored there by the presentational PersistentTabBar component, so the bottom bar stays visible on every authenticated screen. It occupies space in the layout (no overlap), reuses the tab-bar visual, and switching tabs from a secondary screen replaces the screen (no extra history entries).
+- (onboarding): login and cadastro.
+
+Tab highlight on secondary screens comes from the origin tab declared per screen: Caronas origin for ride details, confirmation, finalization and rating; Histórico origin for history details; Perfil origin for profile editing. Rating opened later from the history detail screen keeps the documented Caronas fallback. Direct URL access uses the same declared fallback.
+
+Profile editing intercepts tab switches: clean forms switch immediately; a form with unsaved changes shows the existing discard dialog (cancel keeps editing and values; confirm discards and switches).
+
+Both (app) and (flows) layouts contain the same minimal session guard: nothing is rendered until hydration, and without an account/profile the user is redirected to /login.
+
+Secondary screens carry navigation fallbacks: when there is nothing in the navigation stack to go back to (direct URL access), ScreenHeader and secondary back actions replace to a coherent fixed route instead of a no-op back action.
+
 Repository pattern
 
 A repository interface describes application operations without exposing the persistence implementation.

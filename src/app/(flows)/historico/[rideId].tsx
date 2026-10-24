@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { InfoBadge } from '@/components/info-badge';
+import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,35 +15,36 @@ import { useRideHistory } from '@/hooks/use-ride-history';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 
-export default function RideFinishedScreen() {
+export default function HistoryRideDetailsScreen() {
   const router = useRouter();
   const { rideId } = useLocalSearchParams<{ rideId: string }>();
   const { currentUser } = useAppState();
   const { ride, isLoading: isRideLoading } = useRide(rideId);
   const { entries, isLoading: isHistoryLoading } = useRideHistory();
-  const { rating, isLoading: isRatingLoading } = useRating(rideId);
+  const { rating } = useRating(rideId);
   const theme = useTheme();
 
-  if (isRideLoading || isHistoryLoading || isRatingLoading) {
-    return <FeedbackMessage message="Carregando carona finalizada..." showActivity />;
+  const historyEntry = entries.find((entry) => entry.history.rideId === rideId);
+
+  if (isRideLoading || isHistoryLoading) {
+    return <FeedbackMessage message="Carregando histórico..." showActivity />;
   }
 
-  const isFinished = entries.some((entry) => entry.history.rideId === rideId);
-
-  if (!currentUser || !rideId || !ride || !isFinished) {
-    return <FeedbackMessage message="Carona finalizada não encontrada." />;
+  if (!currentUser || !historyEntry || !ride) {
+    return <FeedbackMessage message="Experiência não encontrada." />;
   }
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <ScreenHeader
-            title="Carona finalizada!"
-            subtitle="A carona foi adicionada ao seu histórico."
+            title="Carona finalizada"
+            subtitle="Esta experiência já foi registrada no histórico."
+            fallbackHref="/historico"
           />
 
-          <ThemedView type="backgroundElement" style={[styles.summary, { borderColor: theme.backgroundSelected }]}>
+          <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.backgroundSelected }]}>
             <View style={styles.driverRow}>
               <UserAvatar name={ride.driver.name} />
               <View style={styles.driverInfo}>
@@ -50,14 +52,18 @@ export default function RideFinishedScreen() {
                   {ride.driver.name}
                 </ThemedText>
                 <ThemedText themeColor="textSecondary">
-                  {ride.vehicle} • {ride.vehicleColor}
+                  ★ {ride.driver.rating.toFixed(1)} no perfil do motorista
                 </ThemedText>
               </View>
             </View>
             <View style={styles.details}>
+              <ThemedText>{ride.vehicle} • {ride.vehicleColor}</ThemedText>
               <ThemedText>Origem: {currentUser.campus}</ThemedText>
               <ThemedText>Destino: {ride.destination}</ThemedText>
-              <ThemedText>Horário: {ride.departureTime}</ThemedText>
+              <ThemedText>Saída: {ride.departureTime}</ThemedText>
+              <ThemedText style={styles.price}>
+                {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
+              </ThemedText>
             </View>
 
             {rating ? (
@@ -74,9 +80,9 @@ export default function RideFinishedScreen() {
               />
             )}
           </ThemedView>
-
-          <AppButton title="Voltar para Home" variant="outline" onPress={() => router.replace('/')} />
         </ScrollView>
+
+        <PersistentTabBar activeTab="historico" />
       </SafeAreaView>
     </ThemedView>
   );
@@ -91,8 +97,9 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
         <View style={styles.feedback}>
           {showActivity ? <ActivityIndicator /> : null}
           <ThemedText themeColor="textSecondary">{message}</ThemedText>
-          <Pressable accessibilityRole="button" onPress={() => router.replace('/')}>
-            <ThemedText type="linkPrimary">Voltar para Home</ThemedText>
+          <Pressable
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/historico') as unknown as Href)}>
+            <ThemedText type="linkPrimary">Voltar</ThemedText>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -103,11 +110,13 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { paddingBottom: 32, gap: 14 },
-  summary: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
+  scroll: { flex: 1 },
+  content: { paddingBottom: 12, gap: 14 },
+  card: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   driverInfo: { flex: 1, gap: 3 },
   driverName: { fontSize: 16, lineHeight: 22 },
   details: { gap: 5 },
+  price: { fontWeight: '700' },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

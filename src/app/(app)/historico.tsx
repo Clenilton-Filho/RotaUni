@@ -19,7 +19,7 @@ export default function HistoryScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <ScreenHeader title="Histórico" onBack={() => router.back()} />
+          <ScreenHeader title="Histórico" />
           {isLoading ? (
             <View style={styles.feedback}>
               <ActivityIndicator />

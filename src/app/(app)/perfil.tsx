@@ -80,6 +80,8 @@ export default function ProfileScreen() {
             </View>
           </ThemedView>
 
+          <AppButton title="Editar perfil" onPress={() => router.push('/perfil/editar' as Href)} />
+
           <AppButton
             title={isLoggingOut ? 'Saindo...' : 'Sair da conta'}
             variant="outline"

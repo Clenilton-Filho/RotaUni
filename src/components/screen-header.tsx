@@ -1,3 +1,4 @@
+import { useRouter, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -6,15 +7,30 @@ type ScreenHeaderProps = {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  /** Rota usada quando não há navegação para voltar (acesso direto por URL). */
+  fallbackHref?: string;
 };
 
-export function ScreenHeader({ title, subtitle, onBack }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, onBack, fallbackHref }: ScreenHeaderProps) {
+  const router = useRouter();
   const theme = useTheme();
+
+  const handlePress = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    if (router.canGoBack()) {
+      router.back();
+    } else if (fallbackHref) {
+      router.replace(fallbackHref as unknown as Href);
+    }
+  };
 
   return (
     <View style={[styles.header, { backgroundColor: theme.primary }]}>
-      {onBack ? (
-        <Pressable accessibilityRole="button" onPress={onBack} hitSlop={8} style={styles.back}>
+      {onBack || fallbackHref ? (
+        <Pressable accessibilityRole="button" onPress={handlePress} hitSlop={8} style={styles.back}>
           <Text style={styles.backText}>‹ Voltar</Text>
         </Pressable>
       ) : null}

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { InfoBadge } from '@/components/info-badge';
+import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -59,11 +60,11 @@ export default function RideDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <ScreenHeader
             title="Detalhes da carona"
             subtitle={`Saindo de ${currentUser.campus}`}
-            onBack={() => router.back()}
+            fallbackHref="/"
           />
 
           <SectionCard>
@@ -195,6 +196,8 @@ export default function RideDetailsScreen() {
           {bookingError ? <ThemedText style={styles.error}>{bookingError}</ThemedText> : null}
           {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
         </ScrollView>
+
+        <PersistentTabBar activeTab="caronas" />
       </SafeAreaView>
     </ThemedView>
   );
@@ -222,7 +225,9 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
         <View style={styles.feedback}>
           {showActivity ? <ActivityIndicator /> : null}
           <ThemedText themeColor="textSecondary">{message}</ThemedText>
-          <Pressable accessibilityRole="button" onPress={() => router.back()}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/') as unknown as Href)}>
             <ThemedText type="linkPrimary">‹ Voltar para a listagem</ThemedText>
           </Pressable>
         </View>
@@ -234,7 +239,8 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { paddingBottom: 32, gap: 14 },
+  scroll: { flex: 1 },
+  content: { paddingBottom: 12, gap: 14 },
   section: {
     gap: 8,
     padding: 16,

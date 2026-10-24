@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { InfoBadge } from '@/components/info-badge';
+import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -40,7 +41,7 @@ export default function RideConfirmedScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <ScreenHeader title="Carona escolhida" subtitle="Sua escolha foi confirmada localmente." />
 
           <ThemedView type="backgroundElement" style={[styles.summary, { borderColor: theme.backgroundSelected }]}>
@@ -110,6 +111,8 @@ export default function RideConfirmedScreen() {
 
           {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
         </ScrollView>
+
+        <PersistentTabBar activeTab="caronas" />
       </SafeAreaView>
     </ThemedView>
   );
@@ -123,7 +126,9 @@ function FeedbackMessage({ message, onBack }: { message: string; onBack?: () => 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.feedback}>
           <ThemedText themeColor="textSecondary">{message}</ThemedText>
-          <Pressable accessibilityRole="button" onPress={onBack ?? (() => router.back())}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onBack ?? (() => router.canGoBack() ? router.back() : router.replace('/') as unknown as Href)}>
             <ThemedText type="linkPrimary">Voltar para a Home</ThemedText>
           </Pressable>
         </View>
@@ -135,7 +140,8 @@ function FeedbackMessage({ message, onBack }: { message: string; onBack?: () => 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  content: { paddingBottom: 32, gap: 14 },
+  scroll: { flex: 1 },
+  content: { paddingBottom: 12, gap: 14 },
   summary: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   driverInfo: { flex: 1, gap: 3 },
