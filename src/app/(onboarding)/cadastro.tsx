@@ -55,7 +55,7 @@ export default function CadastroScreen() {
             contentContainerStyle={styles.contentWrapper}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled">
-            <ScreenHeader title="Criar conta" subtitle="Crie seu perfil para começar a encontrar caronas universitárias." />
+            <ScreenHeader title="Criar conta" />
             <View style={styles.content}>
               <Field label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
               <Field label="Email" value={email} onChangeText={setEmail} placeholder="seu@email.com" keyboardType="email-address" />
@@ -141,5 +141,5 @@ const styles = StyleSheet.create({
   error: { color: Colors.light.destructive },
   signupRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingBottom: 8, gap: 5},
   signupLine: { color: Colors.light.textSecondary, fontSize: 15, lineHeight: 21 },
-  signupLink: { color: Colors.light.accent, fontWeight: '700', fontSize: 15, lineHeight: 21 },
+  signupLink: { color: Colors.light.primary, fontWeight: '700', fontSize: 15, lineHeight: 21 },
 });
