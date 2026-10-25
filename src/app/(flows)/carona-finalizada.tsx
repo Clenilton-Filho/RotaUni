@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { InfoBadge } from '@/components/info-badge';
-import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -37,7 +36,7 @@ export default function RideFinishedScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader
             title="Carona finalizada!"
             subtitle="A carona foi adicionada ao seu histórico."
@@ -56,11 +55,27 @@ export default function RideFinishedScreen() {
               </View>
             </View>
             <View style={styles.details}>
-              <ThemedText>Origem: {currentUser.campus}</ThemedText>
-              <ThemedText>Destino: {ride.destination}</ThemedText>
+              <View style={styles.routeList}>
+                <View style={styles.routeItem}>
+                  <View style={[styles.routeDot, { backgroundColor: theme.primary }]} />
+                  <ThemedText style={styles.routeLabel}>
+                    Origem: {currentUser.campus}
+                  </ThemedText>
+                </View>
+                <View style={[styles.routeConnector, { backgroundColor: theme.primary }]} />
+                <View style={styles.routeItem}>
+                  <View style={[styles.routeDot, { backgroundColor: theme.accent }]} />
+                  <ThemedText style={styles.routeLabel}>
+                    Destino: {ride.destination}
+                  </ThemedText>
+                </View>
+              </View>
               <ThemedText>Horário: {ride.departureTime}</ThemedText>
             </View>
 
+          </ThemedView>
+
+          <View style={styles.actions}>
             {rating ? (
               <InfoBadge label={`✓ Motorista avaliado (${rating.stars}/5)`} tone="accent" />
             ) : (
@@ -74,12 +89,9 @@ export default function RideFinishedScreen() {
                 }
               />
             )}
-          </ThemedView>
-
-          <AppButton title="Voltar para Home" variant="outline" onPress={() => router.replace('/')} />
+            <AppButton title="Voltar para Home" variant="outline" onPress={() => router.replace('/')} />
+          </View>
         </ScrollView>
-
-        <PersistentTabBar activeTab="caronas" />
       </SafeAreaView>
     </ThemedView>
   );
@@ -106,12 +118,20 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { flex: 1 },
-  content: { paddingBottom: 12, gap: 14 },
-  summary: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
+  content: { paddingBottom: 32, gap: 14 },
+  summary: { gap: 20, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
+  actions: { gap: 14, marginHorizontal: 20 },
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   driverInfo: { flex: 1, gap: 3 },
   driverName: { fontSize: 16, lineHeight: 22 },
-  details: { gap: 5 },
+  details: { gap: 15 },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
+  routeList: { gap: 0 },
+  routeItem: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  routeDot: { width: 14, height: 14, borderRadius: 7 },
+  routeConnector: { width: 3, height: 22, marginLeft: 5.5, borderRadius: 2 },
+  routeLabel: {
+    fontWeight: '700',
+    flex: 1,
+  },
 });

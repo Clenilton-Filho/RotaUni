@@ -31,11 +31,11 @@ export function ScreenHeader({ title, subtitle, onBack, fallbackHref }: ScreenHe
     <View style={[styles.header, { backgroundColor: theme.primary }]}>
       {onBack || fallbackHref ? (
         <Pressable accessibilityRole="button" onPress={handlePress} hitSlop={8} style={styles.back}>
-          <Text style={styles.backText}>‹ Voltar</Text>
+          <Text style={[styles.backText, { color: theme.onStrongSurface }]}>‹ Voltar</Text>
         </Pressable>
       ) : null}
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.title, { color: theme.onStrongSurface }]}>{title}</Text>
+      {subtitle ? <Text style={[styles.subtitle, { color: theme.onStrongSurfaceMuted }]}>{subtitle}</Text> : null}
     </View>
   );
 }
@@ -52,16 +52,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingRight: 8,
   },
-  backText: { color: '#FFFFFF', fontSize: 16, lineHeight: 22 },
+  backText: { fontSize: 16, lineHeight: 22 },
   title: {
-    color: '#FFFFFF',
     fontSize: 28,
     lineHeight: 36,
     fontWeight: '700',
     flexShrink: 1,
   },
   subtitle: {
-    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 15,
     lineHeight: 21,
     flexShrink: 1,

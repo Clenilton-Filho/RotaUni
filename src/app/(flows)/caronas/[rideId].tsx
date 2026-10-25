@@ -5,14 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { InfoBadge } from '@/components/info-badge';
-import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { UserAvatar } from '@/components/user-avatar';
+import { Colors } from '@/constants/theme';
 import {
-    getRemainingSeats,
-    getRideCapacityStatus,
+  getRemainingSeats,
+  getRideCapacityStatus,
 } from '@/domain/rides/ride.types';
 import { useCreateBooking } from '@/hooks/use-create-booking';
 import { useFinalizeRide } from '@/hooks/use-finalize-ride';
@@ -60,10 +60,10 @@ export default function RideDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader
-            title="Detalhes da carona"
-            subtitle={`Saindo de ${currentUser.campus}`}
+            title={isSelectedRide ? 'Carona reservada' : 'Detalhes da carona'}
+            subtitle={isSelectedRide ? 'Sua reserva foi confirmada.' : `Saindo de ${currentUser.campus}`}
             fallbackHref="/"
           />
 
@@ -118,7 +118,7 @@ export default function RideDetailsScreen() {
                   ? 'Lotada. Não há vagas disponíveis.'
                   : status === 'almost-full'
                     ? `Quase cheia. ${remainingSeats} vaga restante.`
-                    : 'Disponível.'}
+                    : 'Disponíveis.'}
               </ThemedText>
             </SectionCard>
             <SectionCard style={styles.statCard}>
@@ -157,8 +157,8 @@ export default function RideDetailsScreen() {
                   } as unknown as Href);
                 }
               }} />
-              <AppButton title={isCancelling ? 'Cancelando...' : 'Cancelar reserva'} disabled={isCancelling} variant="outline" onPress={() => {
-                confirmAlert('Cancelar reserva', 'Deseja cancelar a carona escolhida?', [
+              <AppButton title={isCancelling ? 'Cancelando...' : 'Cancelar reserva'} disabled={isCancelling} variant="destructive" onPress={() => {
+                confirmAlert('Cancelar reserva', 'Deseja cancelar reserva da carona?', [
                   { text: 'Manter reserva', style: 'cancel' },
                   {
                     text: 'Cancelar reserva',
@@ -173,31 +173,31 @@ export default function RideDetailsScreen() {
               }} />
             </View>
           ) : (
-            <AppButton
-              title={status === 'full'
-                ? 'Sem vagas'
-                : hasCurrentBooking
-                  ? 'Você já possui uma carona escolhida'
-                  : isSaving
-                    ? 'Salvando escolha...'
-                    : 'Escolher esta carona'}
-              disabled={status === 'full' || hasCurrentBooking || isSaving}
-              onPress={async () => {
-                const wasCreated = await createBooking(ride.id);
-                if (wasCreated) {
-                  router.replace({
-                    pathname: '/carona-confirmada',
-                    params: { rideId: ride.id },
-                  } as unknown as Href);
-                }
-              }}
-            />
+            <View style={styles.actionContainer}>
+              <AppButton
+                title={status === 'full'
+                  ? 'Sem vagas'
+                  : hasCurrentBooking
+                    ? 'Você já possui uma carona reservada'
+                    : isSaving
+                      ? 'Salvando reserva...'
+                      : 'Reservar esta carona'}
+                disabled={status === 'full' || hasCurrentBooking || isSaving}
+                onPress={async () => {
+                  const wasCreated = await createBooking(ride.id);
+                  if (wasCreated) {
+                    router.replace({
+                      pathname: '/caronas/[rideId]',
+                      params: { rideId: ride.id },
+                    } as unknown as Href);
+                  }
+                }}
+              />
+            </View>
           )}
           {bookingError ? <ThemedText style={styles.error}>{bookingError}</ThemedText> : null}
           {finalizeError ? <ThemedText style={styles.error}>{finalizeError}</ThemedText> : null}
         </ScrollView>
-
-        <PersistentTabBar activeTab="caronas" />
       </SafeAreaView>
     </ThemedView>
   );
@@ -239,8 +239,7 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { flex: 1 },
-  content: { paddingBottom: 12, gap: 14 },
+  content: { paddingBottom: 32, gap: 14 },
   section: {
     gap: 8,
     padding: 16,
@@ -267,6 +266,7 @@ const styles = StyleSheet.create({
   statCaption: { fontSize: 13, lineHeight: 18 },
   finalizedAction: { alignItems: 'center', gap: 8, paddingVertical: 8, marginHorizontal: 20 },
   currentBookingAction: { gap: 12, marginHorizontal: 20 },
-  error: { color: '#B42318', marginHorizontal: 20 },
+  actionContainer: { marginHorizontal: 20 },
+  error: { color: Colors.light.destructive, marginHorizontal: 20 },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

@@ -22,7 +22,7 @@ export function UserAvatar({ name, size = 48 }: UserAvatarProps) {
           backgroundColor: theme.primary,
         },
       ]}>
-      <Text style={[styles.initial, { fontSize: Math.round(size * 0.42) }]}>{initial}</Text>
+      <Text style={[styles.initial, { color: theme.onStrongSurface, fontSize: Math.round(size * 0.42) }]}>{initial}</Text>
     </View>
   );
 }
@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   initial: {
-    color: '#FFFFFF',
     fontWeight: '700',
   },
 });

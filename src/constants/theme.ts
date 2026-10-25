@@ -1,5 +1,5 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
+ * Below are the colors used by the app. RotaUni intentionally uses the light theme only.
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
@@ -20,23 +20,17 @@ export const Colors = {
     accentSoft: '#FEEDDB',
     positive: '#18794E',
     positiveSoft: '#DEF3E7',
-  },
-  dark: {
-    text: '#FFFFFF',
-    background: '#171A21',
-    backgroundElement: '#22262E',
-    backgroundSelected: '#2C313B',
-    textSecondary: '#B0B4BA',
-    primary: '#2E63B5',
-    accent: '#E05A2B',
-    accentStrong: '#F0A98F',
-    accentSoft: '#3E2F25',
-    positive: '#4CCB92',
-    positiveSoft: '#1F3A2E',
+    destructive: '#B42318',
+    placeholder: '#9AA3B2',
+    borderInput: '#E5E8EE',
+    ratingInactive: '#C7CEDB',
+    onStrongSurface: '#FFFFFF',
+    onStrongSurfaceMuted: 'rgba(255, 255, 255, 0.85)',
+    link: '#3C87F7',
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ThemeColor = keyof typeof Colors.light;
 
 export const Fonts = Platform.select({
   ios: {

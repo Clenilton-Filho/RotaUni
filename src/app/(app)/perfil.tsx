@@ -80,26 +80,23 @@ export default function ProfileScreen() {
             </View>
           </ThemedView>
 
-          <AppButton title="Editar perfil" onPress={() => router.push('/perfil/editar' as Href)} />
+          <View style={styles.actions}>
+            <AppButton title="Editar perfil" onPress={() => router.push('/perfil/editar' as Href)} />
 
-          <AppButton
-            title={isLoggingOut ? 'Saindo...' : 'Sair da conta'}
-            variant="outline"
-            disabled={isLoggingOut}
-            onPress={confirmLogout}
-          />
+            <AppButton
+              title={isLoggingOut ? 'Saindo...' : 'Sair da conta'}
+              variant="outline"
+              disabled={isLoggingOut}
+              onPress={confirmLogout}
+            />
 
-          <ThemedView type="backgroundElement" style={[styles.developmentSection, { borderColor: theme.accentSoft }]}>
-            <ThemedText style={styles.developmentTitle}>Desenvolvimento</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              Ferramentas para limpar o estado local durante os testes.
-            </ThemedText>
             <AppButton
               title={isResetting ? 'Resetando...' : 'Resetar dados locais'}
+              variant="destructive"
               disabled={isResetting}
               onPress={confirmResetLocalData}
             />
-          </ThemedView>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -115,6 +112,5 @@ const styles = StyleSheet.create({
   profileName: { fontSize: 18, lineHeight: 24 },
   card: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
   row: { gap: 4 },
-  developmentSection: { gap: 10, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
-  developmentTitle: { color: '#95371F', fontWeight: '700' },
+  actions: { gap: 14, marginHorizontal: 20 },
 });

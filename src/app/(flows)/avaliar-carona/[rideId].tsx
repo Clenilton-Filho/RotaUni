@@ -4,11 +4,11 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
-import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { UserAvatar } from '@/components/user-avatar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
 import { type RatingStars } from '@/domain/rating/rating.types';
 import { useRating } from '@/hooks/use-rating';
 import { useRide } from '@/hooks/use-ride';
@@ -65,7 +65,7 @@ export default function RateRideScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader
             title="Avaliar motorista"
             subtitle={`Carona até ${ride.destination}`}
@@ -106,15 +106,15 @@ export default function RateRideScreen() {
             ) : null}
           </View>
 
-          <AppButton
-            title={isSubmitting ? 'Enviando...' : isAlreadyRated ? 'Avaliação registrada' : 'Enviar avaliação'}
-            disabled={displayedStars === null || isAlreadyRated || isSubmitting}
-            onPress={handleSubmit}
-          />
+          <View style={styles.actionContainer}>
+            <AppButton
+              title={isSubmitting ? 'Enviando...' : isAlreadyRated ? 'Avaliação registrada' : 'Enviar avaliação'}
+              disabled={displayedStars === null || isAlreadyRated || isSubmitting}
+              onPress={handleSubmit}
+            />
+          </View>
           {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
         </ScrollView>
-
-        <PersistentTabBar activeTab="caronas" />
       </SafeAreaView>
     </ThemedView>
   );
@@ -160,15 +160,15 @@ function FeedbackMessage({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { flex: 1 },
-  content: { paddingBottom: 12, gap: 14 },
+  content: { paddingBottom: 32, gap: 14 },
   ratingSection: { alignItems: 'center', gap: 12, paddingVertical: 16, marginHorizontal: 20 },
+  actionContainer: { marginHorizontal: 20 },
   question: { fontSize: 20, lineHeight: 26, textAlign: 'center' },
   summaryRow: { alignItems: 'center' },
   stars: { flexDirection: 'row', gap: 12, paddingVertical: 8 },
-  star: { color: '#C7CEDB', fontSize: 40, lineHeight: 48 },
-  selectedStar: { color: '#C2410C' },
-  evaluatedText: { color: '#18794E', fontWeight: '700' },
-  error: { color: '#B42318', marginHorizontal: 20 },
+  star: { color: Colors.light.ratingInactive, fontSize: 40, lineHeight: 48 },
+  selectedStar: { color: Colors.light.accent },
+  evaluatedText: { color: Colors.light.positive, fontWeight: '700' },
+  error: { color: Colors.light.destructive, marginHorizontal: 20 },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
 });

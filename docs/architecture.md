@@ -123,12 +123,8 @@ Navigation structure
 Expo Router route groups:
 
 - (app): authenticated tab area. Three tabs (Caronas / Histórico / Perfil) rendered by the classic Tabs navigator. The tab bar is text-only, with an accent indicator on the active tab and no icons.
-- (flows): secondary screens (ride details, booking confirmation, ride finalization, driver rating, profile editing). Keeping them outside the tab group pushes them on the root stack; the tab bar of the navigator is restored there by the presentational PersistentTabBar component, so the bottom bar stays visible on every authenticated screen. It occupies space in the layout (no overlap), reuses the tab-bar visual, and switching tabs from a secondary screen replaces the screen (no extra history entries).
+- (flows): secondary screens (ride details/reservation, ride finalization, driver rating, profile editing). Keeping them outside the tab group pushes them on the root stack, so the tab bar is hidden and the URLs stay flat (e.g. /caronas/[rideId]).
 - (onboarding): login and cadastro.
-
-Tab highlight on secondary screens comes from the origin tab declared per screen: Caronas origin for ride details, confirmation, finalization and rating; Histórico origin for history details; Perfil origin for profile editing. Rating opened later from the history detail screen keeps the documented Caronas fallback. Direct URL access uses the same declared fallback.
-
-Profile editing intercepts tab switches: clean forms switch immediately; a form with unsaved changes shows the existing discard dialog (cancel keeps editing and values; confirm discards and switches).
 
 Both (app) and (flows) layouts contain the same minimal session guard: nothing is rendered until hydration, and without an account/profile the user is redirected to /login.
 

@@ -4,10 +4,10 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
-import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
 import { useAppState } from '@/state/app-provider';
 import { useTheme } from '@/hooks/use-theme';
 import { confirmAlert } from '@/utils/confirm-alert';
@@ -35,10 +35,10 @@ export default function EditProfileScreen() {
     }
   }
 
-  function confirmDiscardChanges(onDiscard: () => void) {
+  function confirmDiscardChanges() {
     confirmAlert('Descartar alterações?', 'As mudanças no perfil não serão salvas.', [
       { text: 'Continuar editando', style: 'cancel' },
-      { text: 'Descartar', style: 'destructive', onPress: onDiscard },
+      { text: 'Descartar', style: 'destructive', onPress: leave },
     ]);
   }
 
@@ -47,7 +47,7 @@ export default function EditProfileScreen() {
       leave();
       return;
     }
-    confirmDiscardChanges(leave);
+    confirmDiscardChanges();
   }
 
   async function handleSave() {
@@ -116,17 +116,6 @@ export default function EditProfileScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-
-        <PersistentTabBar
-          activeTab="perfil"
-          onBeforeSwitch={(proceed) => {
-            if (!isDirty) {
-              proceed();
-              return;
-            }
-            confirmDiscardChanges(proceed);
-          }}
-        />
       </SafeAreaView>
     </ThemedView>
   );
@@ -148,7 +137,7 @@ function Field({ label, value, placeholder, onChangeText }: FieldProps) {
         onChangeText={onChangeText}
         placeholder={placeholder}
         autoCapitalize="none"
-        placeholderTextColor="#9AA3B2"
+        placeholderTextColor={Colors.light.placeholder}
         style={styles.input}
       />
     </View>
@@ -160,20 +149,20 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   keyboardAvoidingView: { flex: 1 },
   contentWrapper: { flexGrow: 1, gap: 24 },
-  content: { padding: 20, gap: 18, paddingBottom: 12 },
+  content: { padding: 20, gap: 18, paddingBottom: 32 },
   card: { gap: 8, padding: 16, borderRadius: 16, borderWidth: 1 },
   row: { gap: 4 },
   field: { gap: 8 },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E8EE',
+    borderColor: Colors.light.borderInput,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     lineHeight: 21,
-    color: '#233049',
-    backgroundColor: '#FFFFFF',
+    color: Colors.light.text,
+    backgroundColor: Colors.light.backgroundElement,
   },
-  error: { color: '#B42318' },
+  error: { color: Colors.light.destructive },
 });

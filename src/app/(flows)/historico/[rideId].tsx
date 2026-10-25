@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { InfoBadge } from '@/components/info-badge';
-import { PersistentTabBar } from '@/components/persistent-tab-bar';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -37,7 +36,7 @@ export default function HistoryRideDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader
             title="Carona finalizada"
             subtitle="Esta experiência já foi registrada no histórico."
@@ -52,15 +51,27 @@ export default function HistoryRideDetailsScreen() {
                   {ride.driver.name}
                 </ThemedText>
                 <ThemedText themeColor="textSecondary">
-                  ★ {ride.driver.rating.toFixed(1)} no perfil do motorista
+                  ★ {ride.driver.rating.toFixed(1)}
                 </ThemedText>
               </View>
             </View>
             <View style={styles.details}>
               <ThemedText>{ride.vehicle} • {ride.vehicleColor}</ThemedText>
-              <ThemedText>Origem: {currentUser.campus}</ThemedText>
-              <ThemedText>Destino: {ride.destination}</ThemedText>
-              <ThemedText>Saída: {ride.departureTime}</ThemedText>
+              <View style={styles.routeList}>
+                <View style={styles.routeItem}>
+                  <View style={[styles.routeDot, { backgroundColor: theme.primary }]} />
+                  <ThemedText style={styles.routeLabel}>
+                    Origem: {currentUser.campus}
+                  </ThemedText>
+                </View>
+                <View style={[styles.routeConnector, { backgroundColor: theme.primary }]} />
+                <View style={styles.routeItem}>
+                  <View style={[styles.routeDot, { backgroundColor: theme.accent }]} />
+                  <ThemedText style={styles.routeLabel}>
+                    Destino: {ride.destination}
+                  </ThemedText>
+                </View>
+              </View>
               <ThemedText style={styles.price}>
                 {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
               </ThemedText>
@@ -81,8 +92,6 @@ export default function HistoryRideDetailsScreen() {
             )}
           </ThemedView>
         </ScrollView>
-
-        <PersistentTabBar activeTab="historico" />
       </SafeAreaView>
     </ThemedView>
   );
@@ -110,13 +119,20 @@ function FeedbackMessage({ message, showActivity = false }: { message: string; s
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { flex: 1 },
-  content: { paddingBottom: 12, gap: 14 },
-  card: { gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
+  content: { paddingBottom: 32, gap: 14 },
+  card: { gap: 20, padding: 16, borderRadius: 16, borderWidth: 1, marginHorizontal: 20 },
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   driverInfo: { flex: 1, gap: 3 },
   driverName: { fontSize: 16, lineHeight: 22 },
-  details: { gap: 5 },
+  details: { gap: 10 },
   price: { fontWeight: '700' },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
+  routeList: { gap: 0 },
+  routeItem: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  routeDot: { width: 14, height: 14, borderRadius: 7 },
+  routeConnector: { width: 3, height: 22, marginLeft: 5.5, borderRadius: 2 },
+  routeLabel: {
+    fontWeight: '700',
+    flex: 1,
+  },
 });

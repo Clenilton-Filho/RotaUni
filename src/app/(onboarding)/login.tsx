@@ -1,12 +1,13 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, Text } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
 import { useAppState } from '@/state/app-provider';
 
 export default function LoginScreen() {
@@ -65,7 +66,7 @@ type FieldProps = { label: string; value: string; placeholder: string; onChangeT
 function Field({ label, value, placeholder, onChangeText, secureTextEntry, keyboardType }: FieldProps) {
   return <View style={styles.field}>
     <ThemedText themeColor="textSecondary">{label}</ThemedText>
-    <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} secureTextEntry={secureTextEntry} keyboardType={keyboardType} autoCapitalize="none" placeholderTextColor="#9AA3B2" style={styles.input} />
+    <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} secureTextEntry={secureTextEntry} keyboardType={keyboardType} autoCapitalize="none" placeholderTextColor={Colors.light.placeholder} style={styles.input} />
   </View>;
 }
 
@@ -78,17 +79,17 @@ const styles = StyleSheet.create({
   field: { gap: 8 },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E8EE',
+    borderColor: Colors.light.borderInput,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     lineHeight: 21,
-    color: '#233049',
-    backgroundColor: '#FFFFFF',
+    color: Colors.light.text,
+    backgroundColor: Colors.light.backgroundElement,
   },
-  error: { color: '#B42318' },
+  error: { color: Colors.light.destructive },
   signupRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  signupLine: { color: '#6E7A8A', fontSize: 15, lineHeight: 21 },
-  signupLink: { color: '#C2410C', fontWeight: '700', fontSize: 15, lineHeight: 21 },
+  signupLine: { color: Colors.light.textSecondary, fontSize: 15, lineHeight: 21 },
+  signupLink: { color: Colors.light.primary, fontWeight: '700', fontSize: 15, lineHeight: 21 },
 });

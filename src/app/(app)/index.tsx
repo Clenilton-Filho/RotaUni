@@ -7,6 +7,7 @@ import { RideCard } from '@/components/rides/ride-card';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
 import { useAvailableRides } from '@/hooks/use-available-rides';
 import { useRide } from '@/hooks/use-ride';
 import { useTheme } from '@/hooks/use-theme';
@@ -38,7 +39,7 @@ export default function HomeScreen() {
               style={styles.currentBookingPressable}>
               <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
                 <InfoBadge label="Confirmada" tone="success" />
-                <ThemedText type="smallBold">Carona escolhida</ThemedText>
+                <ThemedText type="smallBold">Carona reservada</ThemedText>
                 <ThemedText>
                   {bookedRide.driver.name} • {bookedRide.destination} às {bookedRide.departureTime}
                 </ThemedText>
@@ -93,5 +94,5 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 22, lineHeight: 28, fontWeight: '700', paddingHorizontal: 20 },
   ridesList: { gap: 14, paddingHorizontal: 20 },
   feedback: { alignItems: 'center', gap: 12, paddingVertical: 32 },
-  error: { color: '#B42318', paddingHorizontal: 20 },
+  error: { color: Colors.light.destructive, paddingHorizontal: 20 },
 });

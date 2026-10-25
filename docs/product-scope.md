@@ -32,7 +32,7 @@ Detalhes da carona
   ↓
 Escolher carona
   ↓
-Confirmação
+Detalhes da reserva ativa
   ↓
 Carona ativa
   ↓

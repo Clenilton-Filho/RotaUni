@@ -4,12 +4,12 @@ import { InfoBadge } from '@/components/info-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { UserAvatar } from '@/components/user-avatar';
-import { useTheme } from '@/hooks/use-theme';
 import {
-    getRemainingSeats,
-    getRideCapacityStatus,
-    type Ride,
+  getRemainingSeats,
+  getRideCapacityStatus,
+  type Ride,
 } from '@/domain/rides/ride.types';
+import { useTheme } from '@/hooks/use-theme';
 
 type RideCardProps = {
   ride: Ride;

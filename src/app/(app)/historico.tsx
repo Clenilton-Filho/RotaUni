@@ -6,6 +6,7 @@ import { InfoBadge } from '@/components/info-badge';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
 import { UserAvatar } from '@/components/user-avatar';
 import { useRideHistory } from '@/hooks/use-ride-history';
 import { useTheme } from '@/hooks/use-theme';
@@ -89,5 +90,5 @@ const styles = StyleSheet.create({
   driverName: { fontSize: 16, lineHeight: 22 },
   feedback: { alignItems: 'center', gap: 12, paddingVertical: 32 },
   empty: { marginHorizontal: 20 },
-  error: { color: '#B42318', marginHorizontal: 20 },
+  error: { color: Colors.light.destructive, marginHorizontal: 20 },
 });

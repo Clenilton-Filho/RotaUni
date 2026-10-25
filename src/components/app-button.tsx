@@ -6,7 +6,7 @@ type AppButtonProps = {
   title: string;
   onPress?: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'outline';
+  variant?: 'primary' | 'outline' | 'destructive';
 };
 
 export function AppButton({ title, onPress, disabled = false, variant = 'primary' }: AppButtonProps) {
@@ -21,14 +21,18 @@ export function AppButton({ title, onPress, disabled = false, variant = 'primary
         styles.button,
         variant === 'primary'
           ? { backgroundColor: theme.accent }
-          : { backgroundColor: theme.backgroundElement, borderWidth: 1.5, borderColor: theme.backgroundSelected },
+          : variant === 'destructive'
+            ? { backgroundColor: theme.destructive }
+            : { backgroundColor: theme.backgroundElement, borderWidth: 1.5, borderColor: theme.backgroundSelected },
         disabled && styles.disabled,
         pressed && styles.pressed,
       ]}>
       <Text
         style={[
           styles.text,
-          variant === 'primary' ? { color: '#FFFFFF' } : { color: theme.primary },
+          variant === 'primary' || variant === 'destructive'
+            ? { color: theme.onStrongSurface }
+            : { color: theme.primary },
         ]}>
         {title}
       </Text>
