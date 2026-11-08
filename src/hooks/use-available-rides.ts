@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import type { Ride } from '@/domain/rides/ride.types';
-import { rideHistoryRepository } from '@/services/history/local-ride-history.repository';
+import { rideHistoryRepository } from '@/services/history/ride-history.repository';
 import { ridesRepository } from '@/services/rides/rides.repository';
 import { useAppState } from '@/state/app-provider';
 

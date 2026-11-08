@@ -5,8 +5,8 @@ import type { Booking } from '@/domain/booking/booking.types';
 import type { UserProfile } from '@/domain/user/user.types';
 import { sessionRepository } from '@/services/auth/local-session.repository';
 import { userAccountRepository } from '@/services/auth/user-account.repository';
-import { bookingRepository } from '@/services/booking/local-booking.repository';
-import { rideHistoryRepository } from '@/services/history/local-ride-history.repository';
+import { bookingRepository } from '@/services/booking/booking.repository';
+import { rideHistoryRepository } from '@/services/history/ride-history.repository';
 import { ratingRepository } from '@/services/rating/local-rating.repository';
 import { userRepository } from '@/services/user/user.repository';
 
@@ -82,8 +82,9 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   async function saveBooking(booking: Booking) {
-    await bookingRepository.saveBooking(booking);
-    setCurrentBooking(booking);
+    // A fachada devolve a versao confirmada pelo backend (id do servidor).
+    const savedBooking = await bookingRepository.saveBooking(booking);
+    setCurrentBooking(savedBooking);
   }
 
   async function clearBooking() {

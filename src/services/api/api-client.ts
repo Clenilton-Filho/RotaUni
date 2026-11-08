@@ -56,14 +56,32 @@ export class ApiClient {
     return response;
   }
 
-  async post(path: string, body: unknown): Promise<Response> {
+  async post(path: string, body: unknown, headers?: Record<string, string>): Promise<Response> {
     let response: Response;
 
     try {
       response = await fetch(`${this.baseUrl}${path}`, {
         method: 'POST',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body),
+      });
+    } catch (error) {
+      throw new ApiError(
+        'Não foi possível conectar à API RotaUni.',
+        { cause: error },
+      );
+    }
+
+    return response;
+  }
+
+  async delete(path: string, headers?: Record<string, string>): Promise<Response> {
+    let response: Response;
+
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, {
+        method: 'DELETE',
+        headers: { Accept: 'application/json', ...headers },
       });
     } catch (error) {
       throw new ApiError(

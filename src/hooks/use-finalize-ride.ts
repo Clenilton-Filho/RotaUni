@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { rideHistoryRepository } from '@/services/history/local-ride-history.repository';
+import { rideHistoryRepository } from '@/services/history/ride-history.repository';
 import { ratingRepository } from '@/services/rating/local-rating.repository';
 import { ridesRepository } from '@/services/rides/rides.repository';
 import { useAppState } from '@/state/app-provider';

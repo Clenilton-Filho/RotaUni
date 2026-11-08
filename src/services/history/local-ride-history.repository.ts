@@ -32,5 +32,3 @@ export class LocalRideHistoryRepository implements RideHistoryRepository {
     return (await asyncStorageAdapter.get<RideHistory[]>(StorageKeys.rideHistory)) ?? [];
   }
 }
-
-export const rideHistoryRepository: RideHistoryRepository = new LocalRideHistoryRepository();

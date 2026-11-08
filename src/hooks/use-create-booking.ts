@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import type { Booking } from '@/domain/booking/booking.types';
-import { BookingAlreadyExistsError } from '@/services/booking/local-booking.repository';
 import { useAppState } from '@/state/app-provider';
 
 export function useCreateBooking() {
@@ -37,8 +36,10 @@ export function useCreateBooking() {
       await saveBooking(booking);
       return true;
     } catch (bookingError) {
+      // Erros legiveis do backend (reserva duplicada, carona lotada) podem
+      // ir direto para a UI; fora isso, mantenha a mensagem generica.
       setError(
-        bookingError instanceof BookingAlreadyExistsError
+        bookingError instanceof Error && bookingError.message
           ? bookingError.message
           : 'Não foi possível escolher esta carona.',
       );

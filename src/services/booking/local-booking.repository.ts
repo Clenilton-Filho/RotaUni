@@ -2,9 +2,7 @@ import type { Booking } from '@/domain/booking/booking.types';
 import { asyncStorageAdapter } from '@/storage/async-storage.adapter';
 import { StorageKeys } from '@/storage/storage.keys';
 
-import type { BookingRepository } from './booking.repository';
-
-export class BookingAlreadyExistsError extends Error {
+import type { BookingRepository } from './booking.repository';export class BookingAlreadyExistsError extends Error {
   constructor() {
     super('Já existe uma carona escolhida para este usuário.');
     this.name = 'BookingAlreadyExistsError';
@@ -18,7 +16,7 @@ export class LocalBookingRepository implements BookingRepository {
     return asyncStorageAdapter.get<Booking>(StorageKeys.currentBooking);
   }
 
-  async saveBooking(booking: Booking): Promise<void> {
+  async saveBooking(booking: Booking): Promise<Booking> {
     if (this.isSaving) {
       throw new BookingAlreadyExistsError();
     }
@@ -33,6 +31,7 @@ export class LocalBookingRepository implements BookingRepository {
       }
 
       await asyncStorageAdapter.set(StorageKeys.currentBooking, booking);
+      return booking;
     } finally {
       this.isSaving = false;
     }
@@ -42,5 +41,3 @@ export class LocalBookingRepository implements BookingRepository {
     await asyncStorageAdapter.remove(StorageKeys.currentBooking);
   }
 }
-
-export const bookingRepository: BookingRepository = new LocalBookingRepository();
