@@ -1,6 +1,6 @@
 # RotaUni
 
-Aplicativo de caronas universitárias (React Native + Expo) — corredor estudante ↔ campus (Estácio FIC / Parangaba). Integra um servidor backend dedicado (ver boot do app e logs de data source) para caronas, autenticação/perfil, reservas, histórico e avaliações de motoristas.
+Aplicativo de caronas universitárias (React Native + Expo) — Passageiros e Motoristas se encontram no campus para ir a algum lugar. Integra um servidor backend dedicado (ver boot do app e logs de data source) para caronas, autenticação/perfil, reservas, histórico e avaliações de motoristas.
 
 ## Como executar
 
