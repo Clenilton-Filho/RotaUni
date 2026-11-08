@@ -3,14 +3,23 @@ import { asyncStorageAdapter } from '@/storage/async-storage.adapter';
 import { StorageKeys } from '@/storage/storage.keys';
 import * as Crypto from 'expo-crypto';
 
+import { HttpUserAccountRepository } from './http-auth.repository';
+
 import {
     createPasswordMaterial,
     normalizeEmail,
     verifyPassword,
 } from './password.service';
 
+export type RegisterProfileFields = {
+  name?: string;
+  university?: string;
+  institution?: string;
+  campus?: string;
+};
+
 export interface UserAccountRepository {
-  createAccount(input: CreateAccountInput): Promise<UserAccount>;
+  createAccount(input: CreateAccountInput & RegisterProfileFields): Promise<UserAccount>;
   findByEmail(email: string): Promise<UserAccount | null>;
   getById(id: string): Promise<UserAccount | null>;
   verifyCredentials(email: string, password: string): Promise<UserAccount | null>;
@@ -19,7 +28,7 @@ export interface UserAccountRepository {
 }
 
 export class LocalUserAccountRepository implements UserAccountRepository {
-  async createAccount(input: CreateAccountInput) {
+  async createAccount(input: CreateAccountInput & RegisterProfileFields) {
     const email = normalizeEmail(input.email);
     const accounts = await this.getAccounts();
 
@@ -75,4 +84,34 @@ export class LocalUserAccountRepository implements UserAccountRepository {
   }
 }
 
-export const userAccountRepository = new LocalUserAccountRepository();
+export type AuthDataSource = 'mock' | 'http';
+
+function resolveAuthDataSource(): { dataSource: AuthDataSource; baseUrl: string } {
+  const dataSource: AuthDataSource = process.env.EXPO_PUBLIC_AUTH_DATA_SOURCE === 'http' ? 'http' : 'mock';
+  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  if (dataSource === 'http' && !baseUrl) {
+    throw new Error(
+      'EXPO_PUBLIC_AUTH_DATA_SOURCE=http exige EXPO_PUBLIC_API_BASE_URL definida. ' +
+        'Consulte .env.example.',
+    );
+  }
+
+  return { dataSource, baseUrl: baseUrl ?? '' };
+}
+
+const authDataSourceConfig = resolveAuthDataSource();
+
+if (__DEV__) {
+  console.log(
+    authDataSourceConfig.dataSource === 'http'
+      ? `[RotaUni] Auth Data Source: HTTP (${authDataSourceConfig.baseUrl})`
+      : '[RotaUni] Auth Data Source: MOCK',
+  );
+}
+
+/** Fabrica centralizada de contas de usuario: chaveia entre local e HTTP. */
+export const userAccountRepository: UserAccountRepository =
+  authDataSourceConfig.dataSource === 'http'
+    ? new HttpUserAccountRepository(authDataSourceConfig.baseUrl)
+    : new LocalUserAccountRepository();

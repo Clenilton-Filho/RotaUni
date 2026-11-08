@@ -51,7 +51,13 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, []);
 
   async function register(accountInput: CreateAccountInput, profileData: Omit<UserProfile, 'userId'>) {
-    const account = await userAccountRepository.createAccount(accountInput);
+    // No modo HTTP, os campos de perfil viajam no POST /api/v1/auth/register.
+    const account = await userAccountRepository.createAccount({
+      ...accountInput,
+      name: profileData.name,
+      university: profileData.university,
+      campus: profileData.campus,
+    });
     const profile = { ...profileData, userId: account.id };
     await userRepository.saveProfile(profile);
   }

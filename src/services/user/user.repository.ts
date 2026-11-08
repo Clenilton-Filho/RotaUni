@@ -2,6 +2,8 @@ import type { UserProfile } from '@/domain/user/user.types';
 import { asyncStorageAdapter } from '@/storage/async-storage.adapter';
 import { StorageKeys } from '@/storage/storage.keys';
 
+import { HttpUserRepository } from './http-user.repository';
+
 export interface UserRepository {
   getByUserId(userId: string): Promise<UserProfile | null>;
   saveProfile(profile: UserProfile): Promise<void>;
@@ -9,7 +11,7 @@ export interface UserRepository {
   clearAll(): Promise<void>;
 }
 
-export const userRepository: UserRepository = {
+export const localUserRepository: UserRepository = {
   async getByUserId(userId: string) {
     const profiles = (await asyncStorageAdapter.get<UserProfile[]>(StorageKeys.profiles)) ?? [];
     return profiles.find((profile) => profile.userId === userId) ?? null;
@@ -34,3 +36,27 @@ export const userRepository: UserRepository = {
     return asyncStorageAdapter.remove(StorageKeys.profiles);
   },
 };
+
+export type AuthDataSource = 'mock' | 'http';
+
+function resolveAuthDataSource(): { dataSource: AuthDataSource; baseUrl: string } {
+  const dataSource: AuthDataSource = process.env.EXPO_PUBLIC_AUTH_DATA_SOURCE === 'http' ? 'http' : 'mock';
+  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  if (dataSource === 'http' && !baseUrl) {
+    throw new Error(
+      'EXPO_PUBLIC_AUTH_DATA_SOURCE=http exige EXPO_PUBLIC_API_BASE_URL definida. ' +
+        'Consulte .env.example.',
+    );
+  }
+
+  return { dataSource, baseUrl: baseUrl ?? '' };
+}
+
+const profileDataSourceConfig = resolveAuthDataSource();
+
+/** Fabrica centralizada de perfis de usuario: chaveia entre local e HTTP. */
+export const userRepository: UserRepository =
+  profileDataSourceConfig.dataSource === 'http'
+    ? new HttpUserRepository(profileDataSourceConfig.baseUrl)
+    : localUserRepository;
