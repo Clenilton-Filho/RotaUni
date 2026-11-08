@@ -7,7 +7,7 @@ import { sessionRepository } from '@/services/auth/local-session.repository';
 import { userAccountRepository } from '@/services/auth/user-account.repository';
 import { bookingRepository } from '@/services/booking/booking.repository';
 import { rideHistoryRepository } from '@/services/history/ride-history.repository';
-import { ratingRepository } from '@/services/rating/local-rating.repository';
+import { ratingRepository } from '@/services/rating/rating.repository';
 import { userRepository } from '@/services/user/user.repository';
 
 type AppState = {

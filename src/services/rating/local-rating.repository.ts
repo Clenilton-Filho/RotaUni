@@ -45,5 +45,3 @@ export class LocalRatingRepository implements RatingRepository {
     return (await asyncStorageAdapter.get<Rating[]>(StorageKeys.ratings)) ?? [];
   }
 }
-
-export const ratingRepository: RatingRepository = new LocalRatingRepository();

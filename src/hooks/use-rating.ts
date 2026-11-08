@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { Rating, RatingStars } from '@/domain/rating/rating.types';
 import { rideHistoryRepository } from '@/services/history/ride-history.repository';
-import { ratingRepository } from '@/services/rating/local-rating.repository';
+import { ratingRepository } from '@/services/rating/rating.repository';
 import { ridesRepository } from '@/services/rides/rides.repository';
 import { useAppState } from '@/state/app-provider';
 
