@@ -12,5 +12,3 @@ export class MockRidesRepository implements RidesRepository {
     return mockRides.find((ride) => ride.id === id) ?? null;
   }
 }
-
-export const ridesRepository: RidesRepository = new MockRidesRepository();

@@ -39,7 +39,9 @@ export default function ProfileScreen() {
   function confirmResetLocalData() {
     confirmAlert(
       'Resetar dados locais',
-      'Isso removerá usuário, reserva, histórico e avaliações deste protótipo.',
+      process.env.EXPO_PUBLIC_DATA_SOURCE === 'http' || process.env.EXPO_PUBLIC_API_BASE_URL
+        ? 'No modo HTTP o reset limpa apenas a sessão local deste dispositivo; os dados permanecem no backend.'
+        : 'Isso removerá usuário, reserva, histórico e avaliações deste dispositivo.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {

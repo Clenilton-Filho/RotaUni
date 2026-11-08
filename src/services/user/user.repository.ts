@@ -40,7 +40,7 @@ export const localUserRepository: UserRepository = {
 export type AuthDataSource = 'mock' | 'http';
 
 function resolveAuthDataSource(): { dataSource: AuthDataSource; baseUrl: string } {
-  const dataSource: AuthDataSource = process.env.EXPO_PUBLIC_AUTH_DATA_SOURCE === 'http' ? 'http' : 'mock';
+  const dataSource: AuthDataSource = (process.env.EXPO_PUBLIC_AUTH_DATA_SOURCE || process.env.EXPO_PUBLIC_DATA_SOURCE || 'mock') === 'http' ? 'http' : 'mock';
   const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   if (dataSource === 'http' && !baseUrl) {

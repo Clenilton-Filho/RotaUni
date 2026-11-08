@@ -2,7 +2,7 @@
 
 ## Architectural goal
 
-The project uses a local-first architecture that should allow the persistence mechanism to be replaced by a backend later without requiring major changes to the UI.
+The project uses a source-switchable architecture: every domain module has two interchangeable repository implementations (local mock and HTTP backend) behind a stable interface, so the UI never changes when the data source changes.
 
 Current:
 
@@ -11,25 +11,19 @@ React Native UI
     ↓
 Hooks
     ↓
-Services / Repositories
-    ↓
-Storage
-    ↓
-AsyncStorage
+Services / Repositories (factories)
+    ↓ (KEYING: EXPO_PUBLIC_DATA_SOURCE + module overrides)
+Local branch             HTTP branch
+    ↓                        ↓
+AsyncStorage             HTTP / JSON
+(mocks, device data)         ↓
+                         Remote REST API
+                             ↓
+                         server data (persistent database is future work)
+```
 
-Future:
+Both branches run in parity: the 6 domain modules (`rides`, `auth`, `user`, `booking`, `history`, `rating`) are fully implemented in mock and in HTTP. The active source is chosen per factory at import time; hooks and screens never know which one is active.
 
-React Native UI
-    ↓
-Hooks
-    ↓
-Services / Repositories
-    ↓
-HTTP / JSON
-    ↓
-Spring Boot
-    ↓
-Database
 Directory responsibilities
 src/app/
 
@@ -84,7 +78,7 @@ Hooks should provide a convenient interface to screens without making screens re
 
 src/services/
 
-Repository interfaces and implementations plus application services.
+Repository interfaces, factories, and mock/HTTP implementations plus application services.
 
 Examples:
 
@@ -93,10 +87,14 @@ src/services/booking/
 src/services/history/
 src/services/rating/
 src/services/rides/
+src/services/user/
 
 Repository interfaces define what the application needs.
 
-Local implementations provide the current persistence mechanism.
+Factories (`*.repository.ts`) resolve the active data source and are the ONLY place that reads `EXPO_PUBLIC_*` variables. Implementations live side by side:
+
+`local-*.repository.ts` — mock branch, AsyncStorage-backed;
+`http-*.repository.ts` — HTTP branch, calling the remote REST API through the shared `api-client.ts`.
 
 src/state/
 
@@ -108,7 +106,7 @@ It should not become a replacement for every repository/service.
 
 src/storage/
 
-Persistence infrastructure.
+Persistence infrastructure for the mock branch.
 
 Examples:
 
@@ -134,19 +132,22 @@ Repository pattern
 
 A repository interface describes application operations without exposing the persistence implementation.
 
-Example:
+Current resolution, applied per module:
 
 Repository interface
         ↑
         |
-Local implementation
+Factory (`*.repository.ts`)
+        ↓ (override || master || 'mock')
+Local implementation        REST implementation
 
-Later:
+Environment resolution rules:
 
-Repository interface
-        ↑
-        |
-REST implementation
+- master: `EXPO_PUBLIC_DATA_SOURCE` (`'http' | 'mock'`), applies to all modules at once;
+- priority: module override (`EXPO_PUBLIC_<MODULE>_DATA_SOURCE`) || master || `'mock'`;
+- `EXPO_PUBLIC_API_BASE_URL` is the backend URL (machine IP for physical devices);
+- fail-fast: `http` without `EXPO_PUBLIC_API_BASE_URL` throws at boot — never silently fall back to mock in runtime;
+- boot logs in `__DEV__` report the active source per module (`[RotaUni] <Module> Data Source: ...`).
 
 The UI should not need to know whether the data came from AsyncStorage or an HTTP API.
 
@@ -161,9 +162,11 @@ Password material
 
 These concepts should not be merged into a single generic user object unless explicitly justified.
 
-Current local persistence
+In HTTP mode, session identity reaches the backend as the `X-User-Id` header, resolved from the locally stored session (`LocalSessionRepository`). Authentication is still simulated server-side (token `bearer-token-simulado-<userId>`); real authentication (JWT) is future work.
 
-The current prototype uses:
+Current mock persistence
+
+The mock branch uses:
 
 AsyncStorage
     ↓
@@ -173,26 +176,24 @@ Local repositories
 
 Storage keys are centralized in the storage layer.
 
-Backend migration
+Backend (remote REST API)
 
-The planned backend is Java + Spring Boot.
-
-The intended future architecture is:
+The backend is a remote REST API implementing the same contracts the mock branch serves:
 
 RotaUni Passenger
         ↓
       REST
         ↓
-Spring Boot
+Server backend (in-memory repositories)
         ↓
-     Database
+Database (planned)
 
-RotaUni Driver
+RotaUni Driver (planned)
         ↓
       REST
         ↓
-Spring Boot
+Server backend
         ↓
-     Database
+    Database
 
-The Passenger and Driver applications are separate clients of the same backend.
+The Passenger and Driver applications are separate clients of the same backend. Contracts must stay consistent between the backend endpoints and the matching `http-*.repository.ts` files here.

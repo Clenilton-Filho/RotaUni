@@ -2,38 +2,24 @@
 
 ## Current phase
 
-Local-first passenger prototype.
+Client-server passenger application: all domain modules are integrated with the remote REST API backend in HTTP mode (master variable `EXPO_PUBLIC_DATA_SOURCE=http`), running in parity with the local mock implementations.
 
 Implemented:
 
-- local account registration;
-- local authentication;
-- local session;
-- user profile;
-- mocked ride listing;
-- ride details;
-- local booking;
-- booking cancellation;
-- ride finalization;
-- local ratings;
-- ride history;
-- development reset;
-- logout.
+- [x] rides HTTP integration (listing and details, `GET /api/v1/rides`);
+- [x] auth HTTP integration (register/login, `POST /api/v1/auth/*`);
+- [x] user HTTP integration (profile, `GET /api/v1/users/me`);
+- [x] booking HTTP integration (create/active/cancel, `POST /api/v1/bookings`, `GET /bookings/active`, `DELETE /bookings/{id}`);
+- [x] history HTTP integration (finalization and history, `POST /api/v1/bookings/{id}/finalize`, `GET /api/v1/rides/history`);
+- [x] rating HTTP integration (driver rating, `POST /api/v1/ratings`, `historyId` resolved from history);
+- [x] master data-source keying (`EXPO_PUBLIC_DATA_SOURCE`) + per-module overrides + fail-fast + boot logs;
+- [x] local prototype features (mock accounts, mock rides, local booking/history/ratings, development reset, logout) — preserved as the `mock` branch.
 
-## Next phase
+## Backlog
 
-Backend migration:
-
-- Spring Boot backend;
-- REST API;
-- remote authentication;
-- database;
-- shared ride data;
-- shared booking state;
-- shared ratings;
-- multiple devices communicating through the backend.
-
-The backend will initially run on the local network during development.
+- [ ] Real authentication with JWT (replace simulated identity via `X-User-Id` and the fake token);
+- [ ] Persistent database in the backend (replace in-memory repositories);
+- [ ] RotaUni Driver application (separate client; `Ride FINISHED` global completion belongs there).
 
 ## Driver application
 
@@ -50,7 +36,8 @@ Potential functionality:
 - configure stops;
 - manage passengers;
 - approve/select passengers;
-- manage recurring rides.
+- manage recurring rides;
+- global ride completion (`Ride FINISHED`) creating history entries for all passengers.
 
 This functionality does not belong in the current passenger application.
 

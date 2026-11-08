@@ -16,7 +16,7 @@ type RidesRepositoryConfig = {
 };
 
 function resolveConfig(): RidesRepositoryConfig {
-  const rawDataSource = process.env.EXPO_PUBLIC_RIDES_DATA_SOURCE;
+  const rawDataSource = process.env.EXPO_PUBLIC_RIDES_DATA_SOURCE || process.env.EXPO_PUBLIC_DATA_SOURCE || 'mock';
   const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const dataSource: RidesDataSource = rawDataSource === 'http' ? 'http' : 'mock';

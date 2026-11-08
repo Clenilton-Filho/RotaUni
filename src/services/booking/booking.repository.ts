@@ -14,7 +14,7 @@ export interface BookingRepository {
 export type BookingDataSource = 'mock' | 'http';
 
 function resolveConfig(): { dataSource: BookingDataSource; baseUrl: string } {
-  const dataSource: BookingDataSource = process.env.EXPO_PUBLIC_BOOKING_DATA_SOURCE === 'http' ? 'http' : 'mock';
+  const dataSource: BookingDataSource = (process.env.EXPO_PUBLIC_BOOKING_DATA_SOURCE || process.env.EXPO_PUBLIC_DATA_SOURCE || 'mock') === 'http' ? 'http' : 'mock';
   const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   if (dataSource === 'http' && !baseUrl) {

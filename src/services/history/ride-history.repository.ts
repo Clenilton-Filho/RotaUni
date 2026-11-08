@@ -13,7 +13,7 @@ export interface RideHistoryRepository {
 export type HistoryDataSource = 'mock' | 'http';
 
 function resolveConfig(): { dataSource: HistoryDataSource; baseUrl: string } {
-  const dataSource: HistoryDataSource = process.env.EXPO_PUBLIC_HISTORY_DATA_SOURCE === 'http' ? 'http' : 'mock';
+  const dataSource: HistoryDataSource = (process.env.EXPO_PUBLIC_HISTORY_DATA_SOURCE || process.env.EXPO_PUBLIC_DATA_SOURCE || 'mock') === 'http' ? 'http' : 'mock';
   const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   if (dataSource === 'http' && !baseUrl) {

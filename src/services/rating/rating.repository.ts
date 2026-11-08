@@ -12,7 +12,7 @@ export interface RatingRepository {
 export type RatingDataSource = 'mock' | 'http';
 
 function resolveConfig(): { dataSource: RatingDataSource; baseUrl: string } {
-  const dataSource: RatingDataSource = process.env.EXPO_PUBLIC_RATING_DATA_SOURCE === 'http' ? 'http' : 'mock';
+  const dataSource: RatingDataSource = (process.env.EXPO_PUBLIC_RATING_DATA_SOURCE || process.env.EXPO_PUBLIC_DATA_SOURCE || 'mock') === 'http' ? 'http' : 'mock';
   const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   if (dataSource === 'http' && !baseUrl) {

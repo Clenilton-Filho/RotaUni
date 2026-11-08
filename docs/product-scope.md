@@ -2,14 +2,14 @@
 
 RotaUni is a university ridesharing application.
 
-The current project implements the passenger application as a local-first prototype.
+The current project implements the passenger application. It is source-switchable: every domain module runs either with local mock data (AsyncStorage) or integrated with a remote REST API backend over HTTP (master variable `EXPO_PUBLIC_DATA_SOURCE=http`), both branches in parity.
 
 The application allows a passenger to:
 
-- create a local account;
-- create and maintain a local profile;
-- log in locally;
-- view available mocked rides;
+- create an account (local in mock mode; `POST /api/v1/auth/register` in HTTP mode);
+- create and maintain a profile (`GET /api/v1/users/me` in HTTP mode);
+- log in (local in mock mode; `POST /api/v1/auth/login` in HTTP mode);
+- view available rides (mock data in mock mode; `GET /api/v1/rides` in HTTP mode);
 - inspect ride and driver information;
 - choose a ride;
 - cancel an active booking;
@@ -48,7 +48,7 @@ Rating is optional after finalization.
 
 Ride information
 
-The current mocked rides may contain:
+Rides may contain:
 
 ride ID;
 driver ID;
@@ -63,32 +63,28 @@ total capacity;
 confirmed passenger count;
 confirmed passenger names;
 optional price.
+
+In HTTP mode this shape comes from the remote REST API byte-compatible with the mock data (same JSON contract).
 Current authentication
 
-Authentication is local to the device.
+Authentication is simulated (no OAuth, Firebase, or a real security framework yet).
 
-The current prototype does not use:
+In mock mode it is entirely local to the device; passwords use salted iterative SHA-256.
 
-a remote authentication server;
-OAuth;
-Firebase Authentication;
-a backend authentication API.
-
-Passwords are not stored as plaintext.
+In HTTP mode the backend holds the accounts (`POST /api/v1/auth/register`, `POST /api/v1/auth/login`, returning the simulated token `bearer-token-simulado-<userId>`) and the local session is forwarded as the `X-User-Id` header on authenticated calls.
 
 Current persistence
 
-The prototype persists local application data using the project's storage abstraction backed by AsyncStorage.
+Mock mode persists data locally using the project's storage abstraction backed by AsyncStorage.
 
-The current prototype persists user-specific information locally.
+HTTP mode delegates persistence to the server backend in-memory repositories (no database yet; account passwords are plain text server-side until persistence becomes real).
 
-Current prototype limitations
+Current limitations
 
 The current passenger application does NOT implement:
 
-backend;
-REST API;
-remote database;
+real authentication with JWT (identity is simulated via `X-User-Id`);
+a persistent backend database (the server holds data in memory);
 GPS;
 maps;
 live location;
@@ -112,6 +108,6 @@ The future driver product will be a separate application:
 RotaUni Passenger
 RotaUni Driver
 
-They will eventually communicate through a shared backend.
+They are (and will remain) separate clients of the same server backend.
 
 The current passenger application should not introduce driver-mode screens unless explicitly requested.
