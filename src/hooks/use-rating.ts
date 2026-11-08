@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { Rating, RatingStars } from '@/domain/rating/rating.types';
 import { rideHistoryRepository } from '@/services/history/local-ride-history.repository';
 import { ratingRepository } from '@/services/rating/local-rating.repository';
-import { ridesRepository } from '@/services/rides/mock-rides.repository';
+import { ridesRepository } from '@/services/rides/rides.repository';
 import { useAppState } from '@/state/app-provider';
 
 export function useRating(rideId: string | undefined) {

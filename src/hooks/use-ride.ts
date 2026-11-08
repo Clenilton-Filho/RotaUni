@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import type { Ride } from '@/domain/rides/ride.types';
-import { ridesRepository } from '@/services/rides/mock-rides.repository';
+import { ridesRepository } from '@/services/rides/rides.repository';
 
 export function useRide(rideId: string | undefined) {
   const [ride, setRide] = useState<Ride | null>(null);
