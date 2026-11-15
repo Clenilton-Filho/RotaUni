@@ -28,7 +28,9 @@ export function useCreateBooking() {
       id: `${Date.now()}`,
       rideId,
       userId: currentUser.userId,
-      status: 'confirmed',
+      // Solicitação nasce pendente; o modo HTTP prevalece o retorno do
+      // servidor e o modo mock aprova instantaneamente no repositório local.
+      status: 'pending',
       createdAt: new Date().toISOString(),
     };
 

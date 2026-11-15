@@ -2,24 +2,38 @@ import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/app-button';
 import { InfoBadge } from '@/components/info-badge';
 import { RideCard } from '@/components/rides/ride-card';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
+import { useActiveBookingSync } from '@/hooks/use-active-booking-sync';
 import { useAvailableRides } from '@/hooks/use-available-rides';
 import { useRide } from '@/hooks/use-ride';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 
 export default function HomeScreen() {
-  const { currentUser, currentBooking } = useAppState();
+  const { currentUser, currentBooking, clearBooking } = useAppState();
   const { rides, isLoading, error } = useAvailableRides();
   const { ride: bookedRide } = useRide(currentBooking?.rideId);
+  useActiveBookingSync();
   const theme = useTheme();
 
   if (!currentUser) return null;
+
+  const bookingStatus = currentBooking?.status;
+
+  const bookingBadge =
+    bookingStatus === 'pending' ? (
+      <InfoBadge label="Aguardando confirmação do motorista" tone="accent" />
+    ) : bookingStatus === 'confirmed' ? (
+      <InfoBadge label="Confirmada" tone="success" />
+    ) : (
+      <InfoBadge label="Solicitação recusada" tone="neutral" />
+    );
 
   return (
     <ThemedView style={styles.container}>
@@ -27,7 +41,20 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader title={`Olá, ${currentUser.name}!`} subtitle={`Saindo de: ${currentUser.campus}`} />
 
-          {currentBooking && bookedRide ? (
+          {currentBooking && currentBooking.status === 'rejected' ? (
+            <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
+              {bookingBadge}
+              <ThemedText type="smallBold">Solicitação recusada</ThemedText>
+              <ThemedText>
+                O motorista não pôde aceitar sua solicitação. Você já pode buscar outra carona.
+              </ThemedText>
+              <AppButton
+                title="Entendi, buscar outra carona"
+                disabled={false}
+                onPress={() => void clearBooking()}
+              />
+            </ThemedView>
+          ) : currentBooking && bookedRide ? (
             <Pressable
               accessibilityRole="button"
               onPress={() =>
@@ -38,8 +65,10 @@ export default function HomeScreen() {
               }
               style={styles.currentBookingPressable}>
               <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
-                <InfoBadge label="Confirmada" tone="success" />
-                <ThemedText type="smallBold">Carona reservada</ThemedText>
+                {bookingBadge}
+                <ThemedText type="smallBold">
+                  {bookingStatus === 'pending' ? 'Carona solicitada' : 'Carona reservada'}
+                </ThemedText>
                 <ThemedText>
                   {bookedRide.driver.name} • {bookedRide.destination} às {bookedRide.departureTime}
                 </ThemedText>

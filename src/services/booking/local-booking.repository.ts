@@ -30,8 +30,12 @@ export class LocalBookingRepository implements BookingRepository {
         throw new BookingAlreadyExistsError();
       }
 
-      await asyncStorageAdapter.set(StorageKeys.currentBooking, booking);
-      return booking;
+      // Paridade do prototipo: sem motorista real para aprovar, a reserva
+      // mock nasce aprovada ('confirmed'), independentemente do status de
+      // entrada (o modo HTTP preserva o ciclo pending -> confirm/reject).
+      const approvedBooking = { ...booking, status: 'confirmed' as const };
+      await asyncStorageAdapter.set(StorageKeys.currentBooking, approvedBooking);
+      return approvedBooking;
     } finally {
       this.isSaving = false;
     }

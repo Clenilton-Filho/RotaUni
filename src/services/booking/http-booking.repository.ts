@@ -1,4 +1,4 @@
-import type { Booking } from '@/domain/booking/booking.types';
+import type { Booking, BookingStatus } from '@/domain/booking/booking.types';
 
 import type { BookingRepository } from './booking.repository';
 import { BookingAlreadyExistsError } from './local-booking.repository';
@@ -7,12 +7,12 @@ import { ApiClient } from '../api/api-client';
 
 const BOOKINGS_PATH = '/api/v1/bookings';
 
-/** Resposta do backend: BookingResponseDTO do Spring Boot. */
+/** Resposta do backend: BookingResponseDTO (status do ciclo de aprovacao). */
 type BookingApiResponse = {
   id: string;
   rideId: string;
   passengerId: string;
-  status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
   createdAt: string;
 };
 
@@ -116,7 +116,20 @@ function toBooking(response: BookingApiResponse): Booking {
     id: response.id,
     rideId: response.rideId,
     userId: response.passengerId,
-    status: 'confirmed',
+    // O status vem do servidor (ciclo de aprovacao); /active so entrega
+    // PENDING ou CONFIRMED (REJECTED permanece legivel ate ser dispensado).
+    status: toBookingStatus(response.status),
     createdAt: response.createdAt,
   };
+}
+
+function toBookingStatus(responseStatus: BookingApiResponse['status']): BookingStatus {
+  switch (responseStatus) {
+    case 'PENDING':
+      return 'pending';
+    case 'CONFIRMED':
+      return 'confirmed';
+    default:
+      return 'rejected';
+  }
 }

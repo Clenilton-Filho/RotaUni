@@ -14,6 +14,7 @@ import {
   getRemainingSeats,
   getRideCapacityStatus,
 } from '@/domain/rides/ride.types';
+import { useActiveBookingSync } from '@/hooks/use-active-booking-sync';
 import { useCreateBooking } from '@/hooks/use-create-booking';
 import { useFinalizeRide } from '@/hooks/use-finalize-ride';
 import { useRide } from '@/hooks/use-ride';
@@ -29,6 +30,7 @@ export default function RideDetailsScreen() {
   const { ride, isLoading, error } = useRide(rideId);
   const { createBooking, isSaving, error: bookingError } = useCreateBooking();
   const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
+  useActiveBookingSync();
   const { entries: historyEntries, isLoading: isHistoryLoading } = useRideHistory();
   const theme = useTheme();
   const [isCancelling, setIsCancelling] = useState(false);
@@ -55,15 +57,35 @@ export default function RideDetailsScreen() {
   const remainingSeats = getRemainingSeats(ride);
   const hasCurrentBooking = currentBooking !== null;
   const isSelectedRide = currentBooking?.rideId === ride.id;
+  const bookingStatus = currentBooking?.status;
+  const bookingSubtitle =
+    bookingStatus === 'pending'
+      ? 'Aguardando confirmação do motorista.'
+      : bookingStatus === 'rejected'
+        ? 'O motorista não pôde aceitar a solicitação.'
+        : 'Sua reserva foi confirmada.';
   const isFinalizedRide = historyEntries.some((entry) => entry.history.rideId === ride.id);
+
+  const bookingBadge =
+    bookingStatus === 'pending' ? (
+      <InfoBadge label="Aguardando confirmação do motorista" tone="accent" />
+    ) : bookingStatus === 'confirmed' ? (
+      <InfoBadge label="Confirmada" tone="success" />
+    ) : (
+      <InfoBadge label="Solicitação recusada" tone="neutral" />
+    );
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
           <ScreenHeader
-            title={isSelectedRide ? 'Carona reservada' : 'Detalhes da carona'}
-            subtitle={isSelectedRide ? 'Sua reserva foi confirmada.' : `Saindo de ${currentUser.campus}`}
+            title={isSelectedRide
+              ? bookingStatus === 'pending'
+                ? 'Carona solicitada'
+                : 'Carona reservada'
+              : 'Detalhes da carona'}
+            subtitle={isSelectedRide ? bookingSubtitle : `Saindo de ${currentUser.campus}`}
             fallbackHref="/"
           />
 
@@ -85,9 +107,7 @@ export default function RideDetailsScreen() {
           </SectionCard>
 
           {isSelectedRide ? (
-            <View style={styles.confirmBadgeRow}>
-              <InfoBadge label="Confirmada" tone="success" />
-            </View>
+            <View style={styles.confirmBadgeRow}>{bookingBadge}</View>
           ) : null}
 
           <SectionCard>
@@ -145,6 +165,48 @@ export default function RideDetailsScreen() {
               <ThemedText themeColor="textSecondary">
                 Esta experiência está disponível no Histórico.
               </ThemedText>
+            </View>
+          ) : isSelectedRide && bookingStatus === 'rejected' ? (
+            <View style={styles.currentBookingAction}>
+              <ThemedText themeColor="textSecondary">
+                O motorista não pôde aceitar sua solicitação. Você já pode buscar outra carona.
+              </ThemedText>
+              <AppButton
+                title="Entendi, buscar outra carona"
+                disabled={false}
+                onPress={async () => {
+                  await clearBooking();
+                  router.replace('/');
+                }}
+              />
+            </View>
+          ) : isSelectedRide && bookingStatus === 'pending' ? (
+            <View style={styles.currentBookingAction}>
+              <AppButton
+                title="Aguardando confirmação do motorista"
+                disabled={true}
+                variant="outline"
+                onPress={() => undefined}
+              />
+              <AppButton
+                title={isCancelling ? 'Cancelando...' : 'Cancelar solicitação'}
+                disabled={isCancelling}
+                variant="destructive"
+                onPress={() => {
+                  confirmAlert('Cancelar solicitação', 'Deseja cancelar a solicitação desta carona?', [
+                    { text: 'Manter solicitação', style: 'cancel' },
+                    {
+                      text: 'Cancelar solicitação',
+                      style: 'destructive',
+                      onPress: async () => {
+                        setIsCancelling(true);
+                        await clearBooking();
+                        router.replace('/');
+                      },
+                    },
+                  ]);
+                }}
+              />
             </View>
           ) : isSelectedRide ? (
             <View style={styles.currentBookingAction}>

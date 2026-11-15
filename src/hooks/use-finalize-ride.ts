@@ -16,6 +16,11 @@ export function useFinalizeRide() {
       return false;
     }
 
+    if (currentBooking.status !== 'confirmed') {
+      setError('Aguardando confirmação do motorista.');
+      return false;
+    }
+
     if (isFinalizing) return false;
 
     setIsFinalizing(true);

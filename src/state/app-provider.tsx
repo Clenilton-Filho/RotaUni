@@ -19,6 +19,7 @@ type AppState = {
   login: (email: string, password: string) => Promise<boolean>;
   updateUser: (user: UserProfile) => Promise<void>;
   saveBooking: (booking: Booking) => Promise<void>;
+  refreshCurrentBooking: () => Promise<void>;
   clearBooking: () => Promise<void>;
   logout: () => Promise<void>;
   resetLocalData: () => Promise<void>;
@@ -87,6 +88,13 @@ export function AppProvider({ children }: PropsWithChildren) {
     setCurrentBooking(savedBooking);
   }
 
+  /** Reconsulta a reserva ativa (usada por useFocusEffect/polling). */
+  async function refreshCurrentBooking() {
+    if (!currentAccount) return;
+    const booking = await bookingRepository.getCurrentBooking();
+    setCurrentBooking(booking?.userId === currentAccount.id ? booking : null);
+  }
+
   async function clearBooking() {
     await bookingRepository.clearCurrentBooking();
     setCurrentBooking(null);
@@ -124,6 +132,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         login,
         updateUser,
         saveBooking,
+        refreshCurrentBooking,
         clearBooking,
         logout,
         resetLocalData,
