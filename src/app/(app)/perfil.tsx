@@ -12,6 +12,21 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 import { confirmAlert } from '@/utils/confirm-alert';
 
+/**
+ * O reset de desenvolvimento existe apenas no prototipo offline: ele limpa
+ * os repositorios locais (AsyncStorage). No modo HTTP os dados residem no
+ * servidor (o clearAll local e no-op por design), entao o botao fica
+ * oculto — resta o "Sair da conta". Considera a MASTER e qualquer override
+ * por modulo: bastando um modulo em HTTP para ocultar o reset.
+ */
+const isMockMode =
+  process.env.EXPO_PUBLIC_DATA_SOURCE !== 'http' &&
+  process.env.EXPO_PUBLIC_RIDES_DATA_SOURCE !== 'http' &&
+  process.env.EXPO_PUBLIC_AUTH_DATA_SOURCE !== 'http' &&
+  process.env.EXPO_PUBLIC_BOOKING_DATA_SOURCE !== 'http' &&
+  process.env.EXPO_PUBLIC_HISTORY_DATA_SOURCE !== 'http' &&
+  process.env.EXPO_PUBLIC_RATING_DATA_SOURCE !== 'http';
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { currentAccount, currentUser, logout, resetLocalData } = useAppState();
@@ -39,9 +54,7 @@ export default function ProfileScreen() {
   function confirmResetLocalData() {
     confirmAlert(
       'Resetar dados locais',
-      process.env.EXPO_PUBLIC_DATA_SOURCE === 'http' || process.env.EXPO_PUBLIC_API_BASE_URL
-        ? 'No modo HTTP o reset limpa apenas a sessão local deste dispositivo; os dados permanecem no backend.'
-        : 'Isso removerá usuário, reserva, histórico e avaliações deste dispositivo.',
+      'Isso removerá usuário, reserva, histórico e avaliações deste dispositivo.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -92,12 +105,16 @@ export default function ProfileScreen() {
               onPress={confirmLogout}
             />
 
-            <AppButton
-              title={isResetting ? 'Resetando...' : 'Resetar dados locais'}
-              variant="destructive"
-              disabled={isResetting}
-              onPress={confirmResetLocalData}
-            />
+            {/* Reset apenas no prototipo offline (mock); em HTTP os dados
+                residem no servidor e o "Sair da conta" e a saida. */}
+            {isMockMode ? (
+              <AppButton
+                title={isResetting ? 'Resetando...' : 'Resetar dados locais'}
+                variant="destructive"
+                disabled={isResetting}
+                onPress={confirmResetLocalData}
+              />
+            ) : null}
           </View>
         </ScrollView>
       </SafeAreaView>

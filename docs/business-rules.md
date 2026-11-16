@@ -87,6 +87,15 @@ Every ride carries a `university` and a `campus` (backend seeds: `Estácio`/`Par
 - Deliberate divergence (documented in `mock-rides.repository.ts`): the mock listing does NOT filter by `university`/`campus`. The mock profile campus comes from free-text at signup, so an equality filter would empty the list for any demo user whose text does not exactly match the seeds. The real restriction lives server-side.
 - The ride detail screen shows the ride's real origin (`ride.campus`, falling back to `currentUser.campus` for old data) plus the university; the Home header describes the user's profile (`Faculdade: {university} • {campus}`), not a ride origin.
 
+## Profile editing
+
+The profile edit screen (`/perfil/editar`) edits `name`, `university` and `campus` only; email is read-only.
+
+- Mock mode: the profile is persisted in local storage; the repository returns the updated profile, which becomes the source of truth in `AppProvider` (`currentUser`).
+- HTTP mode: the edit is persisted through `PUT /api/v1/users/me` (identity via `X-User-Id`); the server response becomes the new `currentUser`, which also reloads the Home ride list for the new `university` + `campus` (listing filter is backend-authoritative).
+- Backend rule: changing `university`/`campus` is rejected with 409 while the user holds an active blocking booking (`PENDING` or `CONFIRMED`) — "Cancele sua reserva ativa antes de alterar sua faculdade ou campus."; name-only changes are always allowed. Unknown/missing identity returns 401; blank fields return 400.
+- The edit screen shows the API error message and keeps the user on the screen (no navigation on failure).
+
 ## Ride finalization
 
 A ride must be finalized before it can be rated.
@@ -160,8 +169,8 @@ clears ratings.
 
 In HTTP mode (server data):
 
-clears the local session only;
-server-side data (accounts, profiles, bookings, history, ratings) is NOT deleted because it belongs to the backend;
-server-side cleanup requires a backend-provided mechanism (none exists today; restarting the backend resets its in-memory state).
+- the "Resetar dados locais" button is NOT rendered — it exists only in mock mode, where local storage is the source of data;
+- in HTTP the data belongs to the backend (accounts, profiles, bookings, history, ratings) and "Sair da conta" is the exit path; clearing only the local session would be misleading as a "reset";
+- server-side cleanup requires a backend-provided mechanism (none exists today; restarting the backend resets its in-memory state).
 
-The confirm dialog states explicitly what will be cleared in the active mode. Do not use development reset behavior as the implementation of normal logout.
+The mode considered is the master `EXPO_PUBLIC_DATA_SOURCE` plus any per-module override: a single module in HTTP hides the reset button. The confirm dialog states explicitly what will be cleared in the active mode. Do not use development reset behavior as the implementation of normal logout.

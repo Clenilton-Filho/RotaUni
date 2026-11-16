@@ -90,8 +90,9 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   async function updateUser(user: UserProfile) {
-    await userRepository.updateProfile(user);
-    setCurrentUser(user);
+    // A versao retornada pelo backend e a fonte da verdade (PUT /users/me).
+    const updated = await userRepository.updateProfile(user);
+    setCurrentUser(updated);
   }
 
   async function saveBooking(booking: Booking) {

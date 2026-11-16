@@ -7,7 +7,8 @@ import { HttpUserRepository } from './http-user.repository';
 export interface UserRepository {
   getByUserId(userId: string): Promise<UserProfile | null>;
   saveProfile(profile: UserProfile): Promise<void>;
-  updateProfile(profile: UserProfile): Promise<void>;
+  /** Persiste a edicao e devolve o perfil atualizado como fonte da verdade. */
+  updateProfile(profile: UserProfile): Promise<UserProfile>;
   clearAll(): Promise<void>;
 }
 
@@ -30,6 +31,7 @@ export const localUserRepository: UserRepository = {
         storedProfile.userId === profile.userId ? profile : storedProfile,
       ),
     );
+    return profile;
   },
 
   clearAll() {

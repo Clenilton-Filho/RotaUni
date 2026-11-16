@@ -69,9 +69,18 @@ export default function EditProfileScreen() {
         university: values[1],
         campus: values[2],
       });
-    } finally {
+    } catch (saveError) {
+      // Falha na persistencia (ex.: 409 com reserva ativa): mantem o usuario
+      // na tela com o erro visivel, sem fechar a edicao.
+      setError(
+        saveError instanceof Error && saveError.message
+          ? saveError.message
+          : 'Não foi possível salvar o perfil.',
+      );
       setIsSaving(false);
+      return;
     }
+    setIsSaving(false);
     leave();
   }
 
