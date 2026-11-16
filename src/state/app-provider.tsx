@@ -1,5 +1,8 @@
 import { createContext, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react';
 
+import { asyncStorageAdapter } from '@/storage/async-storage.adapter';
+import { StorageKeys } from '@/storage/storage.keys';
+
 import type { CreateAccountInput, UserAccount } from '@/domain/auth/user-account.types';
 import type { Booking } from '@/domain/booking/booking.types';
 import type { UserProfile } from '@/domain/user/user.types';
@@ -17,6 +20,9 @@ type AppState = {
   /** Reserva encerrada pelo motorista (finish), aguardando dispensa. */
   lastEndedBooking: Booking | null;
   isHydrated: boolean;
+  /** Boas-vindas ja exibidas alguma vez (exibicao unica por dispositivo). */
+  welcomeSeen: boolean;
+  markWelcomeSeen: () => Promise<void>;
   register: (account: CreateAccountInput, profile: Omit<UserProfile, 'userId'>) => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   updateUser: (user: UserProfile) => Promise<void>;
@@ -36,6 +42,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [lastEndedBooking, setLastEndedBooking] = useState<Booking | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [welcomeSeen, setWelcomeSeen] = useState(false);
   // Espelho da reserva ativa para detectar a transicao nao-null -> null
   // (encerramento pelo motorista) dentro de refreshCurrentBooking.
   const currentBookingRef = useRef<Booking | null>(null);
@@ -59,8 +66,18 @@ export function AppProvider({ children }: PropsWithChildren) {
       }
     }
 
-    hydrate().finally(() => setIsHydrated(true));
+    asyncStorageAdapter
+      .get<boolean>(StorageKeys.welcomeSeen)
+      .then((seen) => setWelcomeSeen(seen === true))
+      .catch(() => setWelcomeSeen(false))
+      .finally(() => hydrate().finally(() => setIsHydrated(true)));
   }, []);
+
+  /** Marca as boas-vindas como vistas (exibicao unica por dispositivo). */
+  async function markWelcomeSeen() {
+    await asyncStorageAdapter.set(StorageKeys.welcomeSeen, true);
+    setWelcomeSeen(true);
+  }
 
   async function register(accountInput: CreateAccountInput, profileData: Omit<UserProfile, 'userId'>) {
     // No modo HTTP, os campos de perfil viajam no POST /api/v1/auth/register.
@@ -144,7 +161,9 @@ export function AppProvider({ children }: PropsWithChildren) {
       bookingRepository.clearCurrentBooking(),
       rideHistoryRepository.clearAll(),
       ratingRepository.clearAll(),
+      asyncStorageAdapter.remove(StorageKeys.welcomeSeen),
     ]);
+    setWelcomeSeen(false);
     setCurrentAccount(null);
     setCurrentUser(null);
     setCurrentBooking(null);
@@ -159,6 +178,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         currentBooking,
         lastEndedBooking,
         isHydrated,
+        welcomeSeen,
+        markWelcomeSeen,
         register,
         login,
         updateUser,

@@ -16,6 +16,7 @@ Implemented:
 - [x] ride lifecycle on the passenger side (Phase C): `RideStatus` (`open | in_progress | finished`) mapped from the API with `open` fallback; polling extended to `pending` **and** `confirmed` bookings (HTTP mode); finalize gated on `in_progress` (HTTP only); cancel gated on `open` (HTTP only); "driver ended the ride" banner (`lastEndedBooking`) when the active booking disappears from `GET /bookings/active` (driver `finish`), with history already refreshed on focus;
 - [x] institutional scope display (Phase D3): `university`/`campus` on the `Ride` contract (empty-string fallback), seeds aligned with the backend (`Estácio`/`Parangaba`), real ride origin shown in the detail screen and profile-based Home header; the mock listing intentionally does NOT filter by institution (server-authoritative rule, divergence documented);
 - [x] profile editing (Phase E): `PUT /api/v1/users/me` persisted server-side (repository returns the server profile as source of truth; 400/401/404/409 messages surfaced on the edit screen); name-only edits always allowed, institution change blocked with 409 while an active booking exists;
+- [x] onboarding welcome screen (single display per device via `@rotauni:welcomeSeen`, cleared by the development reset) and web-only mobile framing (centered 430px column with a thin dark-gray frame);
 - [x] local prototype features (mock accounts, mock rides, local booking/history/ratings, development reset, logout) — preserved as the `mock` branch.
 
 ## Backlog

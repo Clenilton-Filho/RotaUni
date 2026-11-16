@@ -87,6 +87,17 @@ Every ride carries a `university` and a `campus` (backend seeds: `Estácio`/`Par
 - Deliberate divergence (documented in `mock-rides.repository.ts`): the mock listing does NOT filter by `university`/`campus`. The mock profile campus comes from free-text at signup, so an equality filter would empty the list for any demo user whose text does not exactly match the seeds. The real restriction lives server-side.
 - The ride detail screen shows the ride's real origin (`ride.campus`, falling back to `currentUser.campus` for old data) plus the university; the Home header describes the user's profile (`Faculdade: {university} • {campus}`), not a ride origin.
 
+## Initial flow (onboarding)
+
+The first launch of a device shows the welcome screen (`/(onboarding)/boas-vindas`):
+
+- full-bleed institutional screen (theme `primary` background, `accent` emblem, white title/subtitle, full-width `accent` "Começar" button);
+- "Começar" marks the welcome as seen (`@rotauni:welcomeSeen` in AsyncStorage) and goes to `/login`;
+- the flag is cleared by the development reset (`resetLocalData`), so the welcome is shown again after a mock reset;
+- routing rules (app/flows layouts): logged-in user → `(app)`; not logged and welcome not seen → `/boas-vindas`; not logged and welcome seen → `/login`. Logged-in users never see the welcome again.
+
+Web-only framing: the whole app renders inside a centered phone-width column (`maxWidth: 430`, thin dark-gray border) over a neutral dark background (`app-shell.web.tsx`); native Android/iOS remain edge-to-edge.
+
 ## Profile editing
 
 The profile edit screen (`/perfil/editar`) edits `name`, `university` and `campus` only; email is read-only.

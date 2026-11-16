@@ -5,4 +5,5 @@ export const StorageKeys = {
   currentBooking: 'rotauni.current-booking',
   ratings: 'rotauni.ratings',
   rideHistory: 'rotauni.ride-history',
+  welcomeSeen: '@rotauni:welcomeSeen',
 } as const;
