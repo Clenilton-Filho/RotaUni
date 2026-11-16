@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { Ride } from '@/domain/rides/ride.types';
 import { ridesRepository } from '@/services/rides/rides.repository';
@@ -41,5 +41,22 @@ export function useRide(rideId: string | undefined) {
     };
   }, [rideId]);
 
-  return { ride, isLoading, error };
+  /**
+   * Recarga silenciosa da carona: nao exibe o spinner de tela cheia nem
+   * limpa o conteudo atual; usada para sincronizar status/vagas/passageiros
+   * durante o polling da reserva ativa.
+   */
+  const refetch = useCallback(async () => {
+    if (!rideId) return;
+    try {
+      const loadedRide = await ridesRepository.getRideById(rideId);
+      setRide(loadedRide);
+      setError(null);
+    } catch {
+      // Falha de rede no refetch silencioso nao deve derrubar a tela; o
+      // proximo tick do polling tenta novamente.
+    }
+  }, [rideId]);
+
+  return { ride, isLoading, error, refetch };
 }

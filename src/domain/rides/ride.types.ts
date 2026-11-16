@@ -4,6 +4,8 @@ export type Driver = {
   rating: number;
 };
 
+export type RideStatus = 'open' | 'in_progress' | 'finished';
+
 export type Ride = {
   id: string;
   driver: Driver;
@@ -15,6 +17,9 @@ export type Ride = {
   confirmedPassengers: number;
   passengerNames: string[];
   price: number | null;
+  status: RideStatus;
+  university: string;
+  campus: string;
 };
 
 export type RideCapacityStatus = 'available' | 'almost-full' | 'full';

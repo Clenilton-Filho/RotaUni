@@ -13,6 +13,8 @@ Implemented:
 - [x] history HTTP integration (finalization and history, `POST /api/v1/bookings/{id}/finalize`, `GET /api/v1/rides/history`);
 - [x] rating HTTP integration (driver rating, `POST /api/v1/ratings`, `historyId` resolved from history);
 - [x] master data-source keying (`EXPO_PUBLIC_DATA_SOURCE`) + per-module overrides + fail-fast + boot logs;
+- [x] ride lifecycle on the passenger side (Phase C): `RideStatus` (`open | in_progress | finished`) mapped from the API with `open` fallback; polling extended to `pending` **and** `confirmed` bookings (HTTP mode); finalize gated on `in_progress` (HTTP only); cancel gated on `open` (HTTP only); "driver ended the ride" banner (`lastEndedBooking`) when the active booking disappears from `GET /bookings/active` (driver `finish`), with history already refreshed on focus;
+- [x] institutional scope display (Phase D3): `university`/`campus` on the `Ride` contract (empty-string fallback), seeds aligned with the backend (`Estácio`/`Parangaba`), real ride origin shown in the detail screen and profile-based Home header; the mock listing intentionally does NOT filter by institution (server-authoritative rule, divergence documented);
 - [x] local prototype features (mock accounts, mock rides, local booking/history/ratings, development reset, logout) — preserved as the `mock` branch.
 
 ## Backlog

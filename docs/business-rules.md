@@ -67,6 +67,26 @@ Authentication credentials must not be treated as profile data.
 - In HTTP mode, booking creation is decided by the backend: a full ride is rejected (400), creating the seat-occupancy state server-side; cancellation returns the seat to the ride; passenger finalization does not return the seat.
 - The current booking stores a reference to the selected ride rather than duplicating the complete ride object.
 
+## Ride lifecycle (passenger side)
+
+The ride carries a `status` (`open | in_progress | finished`), mapped from the API with `open` as fallback; mock seeds are born `open`.
+
+While a `confirmed` booking exists (HTTP mode):
+
+- `open`: the passenger may cancel the booking; finalize is blocked ("Aguardando saída do motorista").
+- `in_progress`: the passenger may finalize (individual disembark); cancel is blocked.
+- `finished`: the driver ended the ride; the booking left `GET /bookings/active` (became `COMPLETED` history) and the Home shows a dismissible "driver ended the ride" banner pointing to History for rating.
+
+In mock mode there is no real driver, so both finalize and cancel stay available for `confirmed` bookings, and polling does not run.
+
+## Institutional scope (`university` + `campus`)
+
+Every ride carries a `university` and a `campus` (backend seeds: `Estácio`/`Parangaba`; mock seeds carry the same values). The comparison is normalized (`trim` + case-insensitive).
+
+- In HTTP mode the backend is authoritative: `GET /api/v1/rides` returns only `OPEN` rides of the requester's `university` + `campus` (missing/unknown `X-User-Id` falls back to the default test user), and `POST /api/v1/bookings` rejects unknown users with 401 and cross-institution booking with 403. The front does not duplicate this rule; it only maps the fields with an empty-string fallback for old responses.
+- Deliberate divergence (documented in `mock-rides.repository.ts`): the mock listing does NOT filter by `university`/`campus`. The mock profile campus comes from free-text at signup, so an equality filter would empty the list for any demo user whose text does not exactly match the seeds. The real restriction lives server-side.
+- The ride detail screen shows the ride's real origin (`ride.campus`, falling back to `currentUser.campus` for old data) plus the university; the Home header describes the user's profile (`Faculdade: {university} • {campus}`), not a ride origin.
+
 ## Ride finalization
 
 A ride must be finalized before it can be rated.
@@ -79,6 +99,7 @@ Passenger finalization (the only one implemented today):
 - it creates the passenger's individual history entry;
 - it does NOT release the ride seat;
 - it enables rating the driver (see Ratings).
+- In HTTP mode it additionally requires the ride to be `in_progress` (409 from the backend otherwise), so the gate is enforced both in the UI and server-side.
 
 Driver global completion (`Ride FINISHED`):
 

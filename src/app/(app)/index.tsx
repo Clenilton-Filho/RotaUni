@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,21 +17,34 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 
 export default function HomeScreen() {
-  const { currentUser, currentBooking, clearBooking } = useAppState();
-  const { rides, isLoading, error } = useAvailableRides();
+  const { currentUser, currentBooking, lastEndedBooking, clearBooking, dismissEndedBooking } = useAppState();
+  const { rides, isLoading, error, refetch: refetchRides } = useAvailableRides();
   const { ride: bookedRide } = useRide(currentBooking?.rideId);
   useActiveBookingSync();
   const theme = useTheme();
 
+  // Fase C (sincronizacao em tempo real): a cada mudanca da reserva ativa
+  // (foco/polling) recarrega a listagem em silencio, garantindo que a carona
+  // iniciada (IN_PROGRESS) saia de "Caronas disponiveis" e as vagas fiquem
+  // sempre sincronizadas. Em mock os dados sao estaticos: refetch nao muda nada.
+  useEffect(() => {
+    void refetchRides();
+  }, [currentBooking, lastEndedBooking, refetchRides]);
+
   if (!currentUser) return null;
 
   const bookingStatus = currentBooking?.status;
+  const endedDriverName = lastEndedBooking
+    ? bookedRide?.driver.name ?? 'o motorista'
+    : null;
 
   const bookingBadge =
     bookingStatus === 'pending' ? (
       <InfoBadge label="Aguardando confirmação do motorista" tone="accent" />
+    ) : bookingStatus === 'confirmed' && bookedRide?.status === 'in_progress' ? (
+      <InfoBadge label="Viagem em andamento" tone="success" />
     ) : bookingStatus === 'confirmed' ? (
-      <InfoBadge label="Confirmada" tone="success" />
+      <InfoBadge label="Aguardando saída do motorista" tone="success" />
     ) : (
       <InfoBadge label="Solicitação recusada" tone="neutral" />
     );
@@ -39,7 +53,39 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
-          <ScreenHeader title={`Olá, ${currentUser.name}!`} subtitle={`Saindo de: ${currentUser.campus}`} />
+          {/* Fase D: este cabecalho descreve o perfil, nao a origem de uma
+              carona especifica — a origem real aparece na tela de detalhes. */}
+          <ScreenHeader
+            title={`Olá, ${currentUser.name}!`}
+            subtitle={`Faculdade: ${currentUser.university} • ${currentUser.campus}`} />
+
+          {/* Fase C: motorista encerrou a viagem pelo finish — a reserva saiu
+              do /active e virou historico pronto para avaliacao. */}
+          {lastEndedBooking && !currentBooking ? (
+            <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
+              <InfoBadge label="Viagem encerrada" tone="neutral" />
+              <ThemedText type="smallBold">Viagem encerrada pelo motorista</ThemedText>
+              <ThemedText>
+                Sua viagem com {endedDriverName} foi encerrada. Avalie o motorista no Histórico.
+              </ThemedText>
+              <View style={styles.endedActions}>
+                <AppButton
+                  title="Ir ao Histórico"
+                  disabled={false}
+                  onPress={() => {
+                    dismissEndedBooking();
+                    router.push('/historico');
+                  }}
+                />
+                <AppButton
+                  title="Dispensar"
+                  disabled={false}
+                  variant="outline"
+                  onPress={dismissEndedBooking}
+                />
+              </View>
+            </ThemedView>
+          ) : null}
 
           {currentBooking && currentBooking.status === 'rejected' ? (
             <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
@@ -119,6 +165,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 32, gap: 20 },
   currentBookingPressable: { marginHorizontal: 20, borderRadius: 16 },
   currentBooking: { gap: 8, padding: 16, borderRadius: 16, borderWidth: 1 },
+  endedActions: { gap: 8 },
   hint: { fontSize: 13, lineHeight: 18 },
   sectionTitle: { fontSize: 22, lineHeight: 28, fontWeight: '700', paddingHorizontal: 20 },
   ridesList: { gap: 14, paddingHorizontal: 20 },

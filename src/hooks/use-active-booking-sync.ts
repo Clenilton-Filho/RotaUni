@@ -12,16 +12,19 @@ const isHttpBookingSource =
 /**
  * Sincronizacao da reserva ativa sem WebSockets:
  * - reconsulta a reserva quando a tela ganha foco;
- * - enquanto existir reserva 'pending' em modo HTTP, faz polling leve
- *   (motorista pode confirmar/recusar por fora). Em mock, aprovacao e
- *   instantanea e nao ha polling.
+ * - enquanto existir reserva 'pending' ou 'confirmed' em modo HTTP, faz
+ *   polling leve (motorista pode confirmar/recusar por fora; carona pode
+ *   iniciar e a reserva pode virar historico via finish do motorista).
+ *   Em mock, aprovacao e instantanea e nao ha polling.
  */
 export function useActiveBookingSync() {
   const { currentBooking, currentAccount, refreshCurrentBooking } = useAppState();
 
   // Condicao de (re)agendamento do polling; o valor fresco da reserva vem
   // do provider (state), lido dentro do callback.
-  const shouldPoll = isHttpBookingSource && currentBooking?.status === 'pending';
+  const shouldPoll =
+    isHttpBookingSource &&
+    (currentBooking?.status === 'pending' || currentBooking?.status === 'confirmed');
 
   useFocusEffect(
     useCallback(() => {

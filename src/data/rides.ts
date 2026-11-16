@@ -12,6 +12,9 @@ export const mockRides: Ride[] = [
     confirmedPassengers: 2,
     passengerNames: ['Mariana Alves', 'Pedro Lima'],
     price: 8,
+    status: 'open',
+    university: 'Estácio',
+    campus: 'Parangaba',
   },
   {
     id: 'ride-002',
@@ -24,6 +27,9 @@ export const mockRides: Ride[] = [
     confirmedPassengers: 3,
     passengerNames: ['Lucas Rocha', 'Ana Beatriz', 'Rafael Nunes'],
     price: 7.5,
+    status: 'open',
+    university: 'Estácio',
+    campus: 'Parangaba',
   },
   {
     id: 'ride-003',
@@ -36,6 +42,9 @@ export const mockRides: Ride[] = [
     confirmedPassengers: 4,
     passengerNames: ['Camila Freitas', 'Bruno Castro', 'Isabela Melo', 'Tiago Martins'],
     price: null,
+    status: 'open',
+    university: 'Estácio',
+    campus: 'Parangaba',
   },
   {
     id: 'ride-004',
@@ -48,6 +57,9 @@ export const mockRides: Ride[] = [
     confirmedPassengers: 1,
     passengerNames: ['Diego Ramos'],
     price: 6,
+    status: 'open',
+    university: 'Estácio',
+    campus: 'Parangaba',
   },
   {
     id: 'ride-005',
@@ -60,5 +72,8 @@ export const mockRides: Ride[] = [
     confirmedPassengers: 2,
     passengerNames: ['Larissa Gomes', 'André Costa'],
     price: null,
+    status: 'open',
+    university: 'Estácio',
+    campus: 'Parangaba',
   },
 ];

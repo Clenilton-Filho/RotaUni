@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,13 +27,24 @@ export default function RideDetailsScreen() {
   const router = useRouter();
   const { rideId } = useLocalSearchParams<{ rideId: string }>();
   const { clearBooking, currentUser, currentBooking } = useAppState();
-  const { ride, isLoading, error } = useRide(rideId);
+  const { ride, isLoading, error, refetch: refetchRide } = useRide(rideId);
   const { createBooking, isSaving, error: bookingError } = useCreateBooking();
   const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
   useActiveBookingSync();
   const { entries: historyEntries, isLoading: isHistoryLoading } = useRideHistory();
   const theme = useTheme();
   const [isCancelling, setIsCancelling] = useState(false);
+
+  // Fase C (sincronizacao em tempo real): a cada atualizacao da reserva
+  // ativa (foco/polling) correspondente a esta carona, recarrega o ride em
+  // silencio para refletir status, vagas e passageiros ao vivo. Em HTTP cada
+  // tick do polling produz um novo objeto de booking; em mock a identidade
+  // nao muda, entao o comportamento offline fica intacto.
+  useEffect(() => {
+    if (rideId && currentBooking?.rideId === rideId) {
+      void refetchRide();
+    }
+  }, [currentBooking, rideId, refetchRide]);
 
   if (!currentUser) return null;
 
@@ -58,17 +69,36 @@ export default function RideDetailsScreen() {
   const hasCurrentBooking = currentBooking !== null;
   const isSelectedRide = currentBooking?.rideId === ride.id;
   const bookingStatus = currentBooking?.status;
+
+  // Fase C: no modo HTTP o status da carona governa o que o passageiro pode
+  // fazer (open: cancelavel, finalize bloqueado; in_progress: finalize,
+  // cancelamento bloqueado). Em mock nao ha motorista real: tudo liberado.
+  const isHttpBookingSource =
+    (process.env.EXPO_PUBLIC_BOOKING_DATA_SOURCE || process.env.EXPO_PUBLIC_DATA_SOURCE || 'mock') === 'http';
+  const isHttpConfirmedRide =
+    isHttpBookingSource && isSelectedRide && bookingStatus === 'confirmed';
+  const canFinalize = !isHttpConfirmedRide || ride.status === 'in_progress';
+  const canCancelBooking = !isHttpConfirmedRide || ride.status === 'open';
+
   const bookingSubtitle =
     bookingStatus === 'pending'
       ? 'Aguardando confirmação do motorista.'
       : bookingStatus === 'rejected'
         ? 'O motorista não pôde aceitar a solicitação.'
-        : 'Sua reserva foi confirmada.';
+        : isHttpConfirmedRide && ride.status === 'in_progress'
+          ? 'Viagem em andamento.'
+          : isHttpConfirmedRide
+            ? 'Aguardando saída do motorista.'
+            : 'Sua reserva foi confirmada.';
   const isFinalizedRide = historyEntries.some((entry) => entry.history.rideId === ride.id);
 
   const bookingBadge =
     bookingStatus === 'pending' ? (
       <InfoBadge label="Aguardando confirmação do motorista" tone="accent" />
+    ) : bookingStatus === 'confirmed' && isHttpConfirmedRide && ride.status === 'in_progress' ? (
+      <InfoBadge label="Viagem em andamento" tone="success" />
+    ) : bookingStatus === 'confirmed' && isHttpConfirmedRide ? (
+      <InfoBadge label="Aguardando saída do motorista" tone="success" />
     ) : bookingStatus === 'confirmed' ? (
       <InfoBadge label="Confirmada" tone="success" />
     ) : (
@@ -85,7 +115,7 @@ export default function RideDetailsScreen() {
                 ? 'Carona solicitada'
                 : 'Carona reservada'
               : 'Detalhes da carona'}
-            subtitle={isSelectedRide ? bookingSubtitle : `Saindo de ${currentUser.campus}`}
+            subtitle={isSelectedRide ? bookingSubtitle : `Saindo de ${ride.campus || currentUser.campus}`}
             fallbackHref="/"
           />
 
@@ -116,7 +146,8 @@ export default function RideDetailsScreen() {
               <View style={styles.routeItem}>
                 <View style={[styles.routeDot, { backgroundColor: theme.primary }]} />
                 <ThemedText style={styles.routeLabel}>
-                  Origem: {currentUser.campus}
+                  {/* Fase D: origem real da carona, com fallback para dados antigos. */}
+                  Origem: {ride.campus || currentUser.campus}
                 </ThemedText>
               </View>
               <View style={[styles.routeConnector, { backgroundColor: theme.primary }]} />
@@ -127,6 +158,11 @@ export default function RideDetailsScreen() {
                 </ThemedText>
               </View>
             </View>
+            {ride.university ? (
+              <ThemedText themeColor="textSecondary" style={styles.statCaption}>
+                Faculdade: {ride.university}
+              </ThemedText>
+            ) : null}
           </SectionCard>
 
           <View style={styles.statsRow}>
@@ -210,29 +246,47 @@ export default function RideDetailsScreen() {
             </View>
           ) : isSelectedRide ? (
             <View style={styles.currentBookingAction}>
-              <AppButton title={isFinalizing ? 'Finalizando...' : 'Finalizar carona'} disabled={isFinalizing} onPress={async () => {
-                const finalized = await finalizeRide();
-                if (finalized) {
-                  router.replace({
-                    pathname: '/carona-finalizada',
-                    params: { rideId },
-                  } as unknown as Href);
-                }
-              }} />
-              <AppButton title={isCancelling ? 'Cancelando...' : 'Cancelar reserva'} disabled={isCancelling} variant="destructive" onPress={() => {
-                confirmAlert('Cancelar reserva', 'Deseja cancelar reserva da carona?', [
-                  { text: 'Manter reserva', style: 'cancel' },
-                  {
-                    text: 'Cancelar reserva',
-                    style: 'destructive',
-                    onPress: async () => {
-                      setIsCancelling(true);
-                      await clearBooking();
-                      router.replace('/');
+              {canFinalize ? (
+                <AppButton title={isFinalizing ? 'Finalizando...' : 'Finalizar carona'} disabled={isFinalizing} onPress={async () => {
+                  const finalized = await finalizeRide();
+                  if (finalized) {
+                    router.replace({
+                      pathname: '/carona-finalizada',
+                      params: { rideId },
+                    } as unknown as Href);
+                  }
+                }} />
+              ) : (
+                <AppButton
+                  title={ride.status === 'finished' ? 'Viagem encerrada pelo motorista' : 'Aguardando saída do motorista'}
+                  disabled={true}
+                  variant="outline"
+                  onPress={() => undefined}
+                />
+              )}
+              {canCancelBooking ? (
+                <AppButton title={isCancelling ? 'Cancelando...' : 'Cancelar reserva'} disabled={isCancelling} variant="destructive" onPress={() => {
+                  confirmAlert('Cancelar reserva', 'Deseja cancelar reserva da carona?', [
+                    { text: 'Manter reserva', style: 'cancel' },
+                    {
+                      text: 'Cancelar reserva',
+                      style: 'destructive',
+                      onPress: async () => {
+                        setIsCancelling(true);
+                        await clearBooking();
+                        router.replace('/');
+                      },
                     },
-                  },
-                ]);
-              }} />
+                  ]);
+                }} />
+              ) : (
+                <AppButton
+                  title="Cancelar reserva"
+                  disabled={true}
+                  variant="outline"
+                  onPress={() => undefined}
+                />
+              )}
             </View>
           ) : (
             <View style={styles.actionContainer}>
