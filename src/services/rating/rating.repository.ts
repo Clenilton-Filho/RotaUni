@@ -2,6 +2,7 @@ import type { Rating } from '@/domain/rating/rating.types';
 
 import { HttpRatingRepository } from './http-rating.repository';
 import { LocalRatingRepository } from './local-rating.repository';
+import { getRuntimeDataSource } from '@/state/data-source';
 
 export interface RatingRepository {
   getByRideAndUser(rideId: string, userId: string): Promise<Rating | null>;
@@ -36,7 +37,6 @@ if (__DEV__) {
 }
 
 /** Fabrica centralizada de avaliacoes: chaveia entre local (AsyncStorage) e HTTP. */
-export const ratingRepository: RatingRepository =
-  ratingDataSourceConfig.dataSource === 'http'
-    ? new HttpRatingRepository(ratingDataSourceConfig.baseUrl)
-    : new LocalRatingRepository();
+const httpRepository = new HttpRatingRepository(ratingDataSourceConfig.baseUrl);
+const mockRepository = new LocalRatingRepository();
+export const ratingRepository: RatingRepository = new Proxy({} as RatingRepository, { get: (_, key: keyof RatingRepository) => (...args: never[]) => ((getRuntimeDataSource() === 'http' ? httpRepository : mockRepository)[key] as (...args: any[]) => any)(...args) });

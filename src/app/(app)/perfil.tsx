@@ -45,7 +45,7 @@ export default function ProfileScreen() {
         onPress: async () => {
           setIsLoggingOut(true);
           await logout();
-          router.replace('/login' as Href);
+          router.replace('/boas-vindas' as Href);
         },
       },
     ]);
@@ -63,7 +63,7 @@ export default function ProfileScreen() {
           onPress: async () => {
             setIsResetting(true);
             await resetLocalData();
-            router.replace('/login' as Href);
+            router.replace('/boas-vindas' as Href);
           },
         },
       ],
@@ -85,7 +85,9 @@ export default function ProfileScreen() {
               <ThemedText themeColor="textSecondary">
                 {currentUser.university} • {currentUser.campus}
               </ThemedText>
+            <ThemedText themeColor="textSecondary">Curso: {currentUser.course ?? 'Não informado'}</ThemedText>
             </View>
+            <View style={styles.row}><ThemedText type="smallBold">Minha avaliação</ThemedText><ThemedText>{currentUser.rating == null ? 'Sem avaliações' : `★ ${currentUser.rating.toFixed(1)}`}</ThemedText></View>
           </View>
 
           <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.backgroundSelected }]}>

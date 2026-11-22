@@ -1,6 +1,6 @@
 # RotaUni
 
-Aplicativo de caronas universitárias (React Native + Expo) — Passageiros e Motoristas se encontram no campus para ir a algum lugar. Integra um servidor backend dedicado (ver boot do app e logs de data source) para caronas, autenticação/perfil, reservas, histórico e avaliações de motoristas.
+Aplicativo de caronas universitárias (React Native + Expo) — Passageiros e Motoristas se encontram no campus para ir a algum lugar. Integra um servidor backend dedicado para caronas, autenticação/perfil, reservas, histórico e avaliação mútua. Perfis carregam `course` e `rating` pode ser nulo quando ainda não existem avaliações.
 
 ## Como executar
 
@@ -89,12 +89,12 @@ Em `mock` o log mostra `[RotaUni] <Módulo> Data Source: MOCK`. Use esses logs p
 
 | Módulo | `mock` (AsyncStorage) | `http` (API REST remota) |
 |---|---|---|
-| rides | `src/data/rides.ts` (dados fixos) | `GET /api/v1/rides`, `GET /api/v1/rides/{id}` |
+| rides | `src/data/rides.ts` (dados fixos) | `GET /api/v1/rides`, `GET /api/v1/rides/{id}`; estados incluem `CANCELLED` |
 | auth | contas locais + SHA-256 iterativo | `POST /api/v1/auth/register`, `POST /auth/login` (token simulado) |
 | user | perfil local | `GET /api/v1/users/me` (header `X-User-Id`) |
 | booking | 1 reserva ativa no device | `POST /api/v1/bookings`, `GET /bookings/active`, `DELETE /bookings/{id}` (vagas controladas pelo backend) |
 | history | histórico local | `POST /api/v1/bookings/{id}/finalize`, `GET /api/v1/rides/history` |
-| rating | avaliações locais | `POST /api/v1/ratings` (o repositório resolve o `historyId` via histórico) |
+| rating | avaliações locais | `POST /api/v1/ratings` (o repositório resolve o `historyId` via histórico); o backend também agrega avaliações do passageiro |
 
 Erros legíveis de negócio vêm do backend em contrato partilhado: 400 carona lotada / já avaliada, 409 e-mail ou reserva duplicada, 401 login inválido. A tela de login trata 401 retornando `null`; o cadastro traduz 409 em `EMAIL_ALREADY_EXISTS`.
 

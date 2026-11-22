@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,7 +26,7 @@ import { confirmAlert } from '@/utils/confirm-alert';
 export default function RideDetailsScreen() {
   const router = useRouter();
   const { rideId } = useLocalSearchParams<{ rideId: string }>();
-  const { clearBooking, currentUser, currentBooking } = useAppState();
+  const { clearBooking, currentUser, currentBooking, lastEndedBooking } = useAppState();
   const { ride, isLoading, error, refetch: refetchRide } = useRide(rideId);
   const { createBooking, isSaving, error: bookingError } = useCreateBooking();
   const { finalizeRide, isFinalizing, error: finalizeError } = useFinalizeRide();
@@ -45,6 +45,20 @@ export default function RideDetailsScreen() {
       void refetchRide();
     }
   }, [currentBooking, rideId, refetchRide]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const dataSource = process.env.EXPO_PUBLIC_DATA_SOURCE || 'mock';
+      if (dataSource !== 'http' || !rideId) return undefined;
+
+      void refetchRide();
+      const interval = setInterval(() => {
+        void refetchRide();
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }, [refetchRide, rideId]),
+  );
 
   if (!currentUser) return null;
 
@@ -78,7 +92,7 @@ export default function RideDetailsScreen() {
   const isHttpConfirmedRide =
     isHttpBookingSource && isSelectedRide && bookingStatus === 'confirmed';
   const canFinalize = !isHttpConfirmedRide || ride.status === 'in_progress';
-  const canCancelBooking = !isHttpConfirmedRide || ride.status === 'open';
+  const canCancelBooking = ride.status !== 'cancelled' && (!isHttpConfirmedRide || ride.status === 'open');
 
   const bookingSubtitle =
     bookingStatus === 'pending'
@@ -91,6 +105,17 @@ export default function RideDetailsScreen() {
             ? 'Aguardando saída do motorista.'
             : 'Sua reserva foi confirmada.';
   const isFinalizedRide = historyEntries.some((entry) => entry.history.rideId === ride.id);
+  const isTerminalRide = ride.status === 'finished' || ride.status === 'completed' || ride.status === 'cancelled';
+  const hasParticipationEvidence =
+    isSelectedRide ||
+    lastEndedBooking?.rideId === ride.id ||
+    isFinalizedRide ||
+    ride.passengerNames.includes(currentUser.name);
+  // Ao finalizar, /bookings/active deixa de retornar a reserva e o provider
+  // move a última reserva conhecida para lastEndedBooking. Esse snapshot é
+  // essencial para não perder o vínculo do passageiro durante o polling,
+  // antes (ou caso) o histórico server-side esteja disponível.
+  const participatedInRide = hasParticipationEvidence;
 
   const bookingBadge =
     bookingStatus === 'pending' ? (
@@ -131,7 +156,7 @@ export default function RideDetailsScreen() {
                 </ThemedText>
               </View>
               <ThemedText style={[styles.driverRating, { color: theme.accent }]}>
-                ★ {ride.driver.rating.toFixed(1)}
+                {ride.driver.rating == null ? 'Sem avaliações' : `★ ${ride.driver.rating.toFixed(1)}`}
               </ThemedText>
             </View>
           </SectionCard>
@@ -180,7 +205,7 @@ export default function RideDetailsScreen() {
             <SectionCard style={styles.statCard}>
               <ThemedText themeColor="textSecondary">Valor</ThemedText>
               <ThemedText type="subtitle">
-                {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
+                {ride.price == null || ride.price === 0 ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
               </ThemedText>
             </SectionCard>
           </View>
@@ -195,12 +220,13 @@ export default function RideDetailsScreen() {
             )}
           </SectionCard>
 
-          {isFinalizedRide && !isSelectedRide ? (
+          {isTerminalRide ? (
             <View style={styles.finalizedAction}>
-              <InfoBadge label="Carona finalizada" tone="neutral" />
+              <InfoBadge label={ride.status === 'cancelled' ? 'Carona cancelada' : 'Viagem encerrada'} tone="neutral" />
               <ThemedText themeColor="textSecondary">
-                Esta experiência está disponível no Histórico.
+                {participatedInRide ? 'Sua viagem foi encerrada. Consulte o Histórico para avaliar o motorista.' : 'Esta carona não está mais disponível para reserva.'}
               </ThemedText>
+              {participatedInRide ? <AppButton title="Ir ao Histórico" onPress={() => router.push('/historico')} /> : null}
             </View>
           ) : isSelectedRide && bookingStatus === 'rejected' ? (
             <View style={styles.currentBookingAction}>

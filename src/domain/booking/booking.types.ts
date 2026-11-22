@@ -1,4 +1,4 @@
-export type BookingStatus = 'pending' | 'confirmed' | 'rejected';
+export type BookingStatus = 'pending' | 'confirmed' | 'rejected' | 'completed' | 'cancelled';
 
 export type Booking = {
   id: string;

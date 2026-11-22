@@ -13,6 +13,8 @@ type UsersMeResponse = {
   email: string;
   university: string;
   campus: string;
+  course?: string;
+  rating?: number | null;
 };
 
 /**
@@ -45,6 +47,7 @@ export class HttpUserRepository implements UserRepository {
       name: profile.name,
       university: profile.university,
       campus: profile.campus,
+      course: profile.course ?? 'Não informado',
     }, {
       'X-User-Id': profile.userId,
     });
@@ -84,6 +87,8 @@ export class HttpUserRepository implements UserRepository {
       name: user.name,
       university: user.university,
       campus: user.campus,
+      course: user.course ?? 'Não informado',
+      rating: user.rating ?? null,
       createdAt: new Date().toISOString(),
     };
   }

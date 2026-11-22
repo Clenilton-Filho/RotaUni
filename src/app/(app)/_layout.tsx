@@ -9,10 +9,11 @@ export default function AppLayout() {
   const theme = useTheme();
 
   if (!isHydrated) return null;
+  if (!welcomeSeen) return <Redirect href="/boas-vindas" />;
   if (!currentAccount || !currentUser) {
     // Onboarding: primeira visita do dispositivo ve as boas-vindas; as
     // seguintes vao direto ao login.
-    return <Redirect href={welcomeSeen ? '/login' : '/boas-vindas'} />;
+    return <Redirect href="/login" />;
   }
 
   return (

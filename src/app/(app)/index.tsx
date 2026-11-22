@@ -17,7 +17,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAppState } from '@/state/app-provider';
 
 export default function HomeScreen() {
-  const { currentUser, currentBooking, lastEndedBooking, clearBooking, dismissEndedBooking } = useAppState();
+  const { currentUser, currentBooking, clearBooking } = useAppState();
   const { rides, isLoading, error, refetch: refetchRides } = useAvailableRides();
   const { ride: bookedRide } = useRide(currentBooking?.rideId);
   useActiveBookingSync();
@@ -29,15 +29,11 @@ export default function HomeScreen() {
   // sempre sincronizadas. Em mock os dados sao estaticos: refetch nao muda nada.
   useEffect(() => {
     void refetchRides();
-  }, [currentBooking, lastEndedBooking, refetchRides]);
+  }, [currentBooking, refetchRides]);
 
   if (!currentUser) return null;
 
   const bookingStatus = currentBooking?.status;
-  const endedDriverName = lastEndedBooking
-    ? bookedRide?.driver.name ?? 'o motorista'
-    : null;
-
   const bookingBadge =
     bookingStatus === 'pending' ? (
       <InfoBadge label="Aguardando confirmação do motorista" tone="accent" />
@@ -61,32 +57,6 @@ export default function HomeScreen() {
 
           {/* Fase C: motorista encerrou a viagem pelo finish — a reserva saiu
               do /active e virou historico pronto para avaliacao. */}
-          {lastEndedBooking && !currentBooking ? (
-            <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
-              <InfoBadge label="Viagem encerrada" tone="neutral" />
-              <ThemedText type="smallBold">Viagem encerrada pelo motorista</ThemedText>
-              <ThemedText>
-                Sua viagem com {endedDriverName} foi encerrada. Avalie o motorista no Histórico.
-              </ThemedText>
-              <View style={styles.endedActions}>
-                <AppButton
-                  title="Ir ao Histórico"
-                  disabled={false}
-                  onPress={() => {
-                    dismissEndedBooking();
-                    router.push('/historico');
-                  }}
-                />
-                <AppButton
-                  title="Dispensar"
-                  disabled={false}
-                  variant="outline"
-                  onPress={dismissEndedBooking}
-                />
-              </View>
-            </ThemedView>
-          ) : null}
-
           {currentBooking && currentBooking.status === 'rejected' ? (
             <ThemedView type="backgroundElement" style={[styles.currentBooking, { borderColor: theme.backgroundSelected }]}>
               {bookingBadge}

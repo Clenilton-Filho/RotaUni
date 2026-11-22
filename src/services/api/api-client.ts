@@ -38,6 +38,8 @@ export class ApiClient {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
   }
 
+  get baseUrlForDiagnostics() { return this.baseUrl; }
+
   async get(path: string, headers?: Record<string, string>): Promise<Response> {
     let response: Response;
 

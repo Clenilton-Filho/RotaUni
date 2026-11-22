@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { Colors } from '@/constants/theme';
 import { useAppState } from '@/state/app-provider';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const { login } = useAppState();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,9 +31,18 @@ export default function LoginScreen() {
 
     setIsSubmitting(true);
     setError('');
-    const authenticated = await login(normalizedEmail, password);
-    setIsSubmitting(false);
-    if (!authenticated) setError('Email ou senha inválidos.');
+    try {
+      const authenticated = await login(normalizedEmail, password);
+      if (!authenticated) {
+        setError('Email ou senha inválidos.');
+        return;
+      }
+      router.replace('/');
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Não foi possível entrar.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

@@ -2,6 +2,7 @@ import type { Ride } from '@/domain/rides/ride.types';
 
 import { HttpRidesRepository } from './http-rides.repository';
 import { MockRidesRepository } from './mock-rides.repository';
+import { getRuntimeDataSource } from '@/state/data-source';
 
 export interface RidesRepository {
   listAvailableRides(): Promise<Ride[]>;
@@ -41,7 +42,6 @@ if (__DEV__) {
   );
 }
 
-export const ridesRepository: RidesRepository =
-  config.dataSource === 'http'
-    ? new HttpRidesRepository(config.baseUrl)
-    : new MockRidesRepository();
+const httpRepository = new HttpRidesRepository(config.baseUrl);
+const mockRepository = new MockRidesRepository();
+export const ridesRepository: RidesRepository = new Proxy({} as RidesRepository, { get: (_, key: keyof RidesRepository) => (...args: never[]) => ((getRuntimeDataSource() === 'http' ? httpRepository : mockRepository)[key] as (...args: any[]) => any)(...args) });

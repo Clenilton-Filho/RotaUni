@@ -12,6 +12,8 @@ type AuthApiUser = {
   email: string;
   university: string;
   campus: string;
+  course?: string;
+  rating?: number | null;
 };
 
 type AuthApiResponse = {
@@ -54,6 +56,7 @@ export class HttpUserAccountRepository implements UserAccountRepository {
       password: input.password,
       university,
       campus,
+      course: input.course ?? 'Não informado',
     };
 
     const response = await this.client.post(REGISTER_PATH, body);
@@ -66,8 +69,8 @@ export class HttpUserAccountRepository implements UserAccountRepository {
       throw new Error(`Não foi possível criar a conta (HTTP ${response.status}).`);
     }
 
-    const { user } = (await response.json()) as AuthApiResponse;
-    return toAccount(user);
+    const { user, token } = (await response.json()) as AuthApiResponse;
+    return toAccount(user, token);
   }
 
   async findByEmail(_email: string): Promise<UserAccount | null> {
@@ -107,8 +110,8 @@ export class HttpUserAccountRepository implements UserAccountRepository {
       throw new Error(`Não foi possível autenticar (HTTP ${response.status}).`);
     }
 
-    const { user } = (await response.json()) as AuthApiResponse;
-    return toAccount(user);
+    const { user, token } = (await response.json()) as AuthApiResponse;
+    return toAccount(user, token);
   }
 
   async emailExists(email: string): Promise<boolean> {
@@ -122,7 +125,7 @@ export class HttpUserAccountRepository implements UserAccountRepository {
   }
 }
 
-function toAccount(user: AuthApiUser): UserAccount {
+function toAccount(user: AuthApiUser, token?: string): UserAccount {
   return {
     id: user.id,
     email: user.email,
@@ -130,5 +133,6 @@ function toAccount(user: AuthApiUser): UserAccount {
     passwordHash: '',
     passwordIterations: 0,
     createdAt: new Date().toISOString(),
+    token,
   };
 }

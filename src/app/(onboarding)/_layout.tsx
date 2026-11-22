@@ -1,12 +1,10 @@
-import { Redirect, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 
 import { useAppState } from '@/state/app-provider';
 
 export default function OnboardingLayout() {
-  const { currentAccount, currentUser, isHydrated } = useAppState();
+  const { isHydrated } = useAppState();
 
   if (!isHydrated) return null;
-  if (currentAccount && currentUser) return <Redirect href="/" />;
-
   return <Stack screenOptions={{ headerShown: false }} />;
 }

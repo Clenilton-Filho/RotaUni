@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
-
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import type { Ride } from '@/domain/rides/ride.types';
 import { rideHistoryRepository } from '@/services/history/ride-history.repository';
 import { ridesRepository } from '@/services/rides/rides.repository';
+import { getRuntimeDataSource } from '@/state/data-source';
 import { useAppState } from '@/state/app-provider';
 
 export function useAvailableRides() {
@@ -10,60 +11,34 @@ export function useAvailableRides() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const load = async () => {
-      if (!currentUser) {
-        setRides([]);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const [loadedRides, histories] = await Promise.all([
-          ridesRepository.listAvailableRides(),
-          rideHistoryRepository.listByUser(currentUser.userId),
-        ]);
-        if (!isMounted) return;
-        const completedRideIds = new Set(histories.map((history) => history.rideId));
-        setRides(loadedRides.filter((ride) => !completedRideIds.has(ride.id)));
-        setError(null);
-      } catch {
-        if (isMounted) setError('Não foi possível carregar as caronas.');
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    void load();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentUser]);
-
-  /**
-   * Recarga silenciosa da listagem: nao exibe o spinner de tela cheia nem
-   * limpa o conteudo atual; usada para sincronizar vagas e caronas abertas
-   * quando o ciclo da reserva/carona muda durante o polling.
-   */
-  const refetch = useCallback(async () => {
-    if (!currentUser) return;
+  const load = useCallback(async (mounted: () => boolean, background = false) => {
+    if (!currentUser) { setRides([]); setIsLoading(false); return; }
+    console.info(`[RotaUni] Caronas: fonte=${getRuntimeDataSource()}`);
     try {
-      const [loadedRides, histories] = await Promise.all([
-        ridesRepository.listAvailableRides(),
-        rideHistoryRepository.listByUser(currentUser.userId),
-      ]);
-      const completedRideIds = new Set(histories.map((history) => history.rideId));
-      setRides(loadedRides.filter((ride) => !completedRideIds.has(ride.id)));
-      setError(null);
-    } catch {
-      // Falha de rede no refetch silencioso nao deve derrubar a tela; o
-      // proximo tick do polling tenta novamente.
-    }
+      const loaded = await ridesRepository.listAvailableRides();
+      console.info(`[RotaUni] Caronas: ${loaded.length} recebidas`);
+      if (!mounted()) return;
+      let visible = loaded;
+      try {
+        const histories = await rideHistoryRepository.listByUser(currentUser.userId);
+        const completed = new Set(histories.map((history) => history.rideId));
+        visible = loaded.filter((ride) => !completed.has(ride.id));
+      } catch (historyError) { console.warn('[RotaUni] Histórico indisponível; mantendo todas as caronas.', historyError); }
+      setRides(visible); setError(null);
+    } catch (cause) {
+      console.error('[RotaUni] GET /api/v1/rides falhou.', cause);
+      if (mounted()) setError(cause instanceof Error ? cause.message : 'Não foi possível carregar as caronas.');
+    } finally { if (!background && mounted()) setIsLoading(false); }
   }, [currentUser]);
-
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    setIsLoading(true);
+    void load(() => active);
+    const polling = getRuntimeDataSource() === 'http'
+      ? setInterval(() => { void load(() => active, true); }, 3000)
+      : undefined;
+    return () => { active = false; if (polling !== undefined) clearInterval(polling); };
+  }, [load]));
+  const refetch = useCallback(async () => { await load(() => true, true); }, [load]);
   return { rides, isLoading, error, refetch };
 }

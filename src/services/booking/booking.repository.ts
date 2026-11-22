@@ -2,6 +2,7 @@ import type { Booking } from '@/domain/booking/booking.types';
 
 import { HttpBookingRepository } from './http-booking.repository';
 import { LocalBookingRepository } from './local-booking.repository';
+import { getRuntimeDataSource } from '@/state/data-source';
 
 export interface BookingRepository {
   getCurrentBooking(): Promise<Booking | null>;
@@ -38,7 +39,6 @@ if (__DEV__) {
 }
 
 /** Fabrica centralizada de reservas: chaveia entre local (AsyncStorage) e HTTP. */
-export const bookingRepository: BookingRepository =
-  bookingDataSourceConfig.dataSource === 'http'
-    ? new HttpBookingRepository(bookingDataSourceConfig.baseUrl)
-    : new LocalBookingRepository();
+const httpRepository = new HttpBookingRepository(bookingDataSourceConfig.baseUrl);
+const mockRepository = new LocalBookingRepository();
+export const bookingRepository: BookingRepository = new Proxy({} as BookingRepository, { get: (_, key: keyof BookingRepository) => (...args: never[]) => ((getRuntimeDataSource() === 'http' ? httpRepository : mockRepository)[key] as (...args: any[]) => any)(...args) });

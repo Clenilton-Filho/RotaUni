@@ -19,13 +19,14 @@ export default function EditProfileScreen() {
   const [name, setName] = useState(currentUser?.name ?? '');
   const [university, setUniversity] = useState(currentUser?.university ?? '');
   const [campus, setCampus] = useState(currentUser?.campus ?? '');
+  const [course, setCourse] = useState(currentUser?.course ?? '');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   if (!currentUser) return null;
 
   const isDirty =
-    name !== currentUser.name || university !== currentUser.university || campus !== currentUser.campus;
+    name !== currentUser.name || university !== currentUser.university || campus !== currentUser.campus || course !== (currentUser.course ?? '');
 
   function leave() {
     if (router.canGoBack()) {
@@ -53,7 +54,7 @@ export default function EditProfileScreen() {
   async function handleSave() {
     if (!currentUser) return;
 
-    const values = [name, university, campus].map((value) => value.trim());
+    const values = [name, university, campus, course].map((value) => value.trim());
 
     if (values.some((value) => value.length === 0)) {
       setError('Preencha todos os campos.');
@@ -68,6 +69,7 @@ export default function EditProfileScreen() {
         name: values[0],
         university: values[1],
         campus: values[2],
+        course: values[3],
       });
     } catch (saveError) {
       // Falha na persistencia (ex.: 409 com reserva ativa): mantem o usuario
@@ -113,6 +115,7 @@ export default function EditProfileScreen() {
                 placeholder="Nome da faculdade"
               />
               <Field label="Campus" value={campus} onChangeText={setCampus} placeholder="Seu campus" />
+              <Field label="Curso" value={course} onChangeText={setCourse} placeholder="Seu curso" />
 
               {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
 

@@ -1,10 +1,10 @@
 export type Driver = {
   id: string;
   name: string;
-  rating: number;
+  rating: number | null;
 };
 
-export type RideStatus = 'open' | 'in_progress' | 'finished';
+export type RideStatus = 'open' | 'in_progress' | 'finished' | 'completed' | 'cancelled';
 
 export type Ride = {
   id: string;

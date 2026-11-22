@@ -2,6 +2,7 @@ import type { RideHistory } from '@/domain/history/ride-history.types';
 
 import { HttpRideHistoryRepository } from './http-ride-history.repository';
 import { LocalRideHistoryRepository } from './local-ride-history.repository';
+import { getRuntimeDataSource } from '@/state/data-source';
 
 export interface RideHistoryRepository {
   listByUser(userId: string): Promise<RideHistory[]>;
@@ -37,7 +38,6 @@ if (__DEV__) {
 }
 
 /** Fabrica centralizada do historico: chaveia entre local (AsyncStorage) e HTTP. */
-export const rideHistoryRepository: RideHistoryRepository =
-  historyDataSourceConfig.dataSource === 'http'
-    ? new HttpRideHistoryRepository(historyDataSourceConfig.baseUrl)
-    : new LocalRideHistoryRepository();
+const httpRepository = new HttpRideHistoryRepository(historyDataSourceConfig.baseUrl);
+const mockRepository = new LocalRideHistoryRepository();
+export const rideHistoryRepository: RideHistoryRepository = new Proxy({} as RideHistoryRepository, { get: (_, key: keyof RideHistoryRepository) => (...args: never[]) => ((getRuntimeDataSource() === 'http' ? httpRepository : mockRepository)[key] as (...args: any[]) => any)(...args) });

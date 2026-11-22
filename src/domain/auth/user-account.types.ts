@@ -5,6 +5,7 @@ export type UserAccount = {
   passwordHash: string;
   passwordIterations: number;
   createdAt: string;
+  token?: string;
 };
 
 export type CreateAccountInput = {

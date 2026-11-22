@@ -16,13 +16,26 @@ export default function CadastroScreen() {
   const [name, setName] = useState('');
   const [university, setUniversity] = useState('');
   const [campus, setCampus] = useState('');
+  const [course, setCourse] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [error, setError] = useState('');
 
+  function fillTestData() {
+    const suffix = Date.now();
+    setName('Rafael Albuquerque');
+    setUniversity('Estácio');
+    setCampus('Parangaba');
+    setCourse('Engenharia de Software');
+    setEmail(`passageiro.teste.${suffix}@rotauni.com.br`);
+    setPassword('teste1234');
+    setPasswordConfirmation('teste1234');
+    setError('');
+  }
+
   async function handleSubmit() {
-    const values = [name, university, campus].map((value) => value.trim());
+    const values = [name, university, campus, course].map((value) => value.trim());
     const normalizedEmail = email.trim().toLowerCase();
 
     if (values.some((value) => value.length === 0) || !normalizedEmail || !password || !passwordConfirmation) {
@@ -35,12 +48,12 @@ export default function CadastroScreen() {
 
     try {
       await register({ email: normalizedEmail, password }, {
-        name: values[0], university: values[1], campus: values[2], createdAt: new Date().toISOString(),
+        name: values[0], university: values[1], campus: values[2], course: values[3], createdAt: new Date().toISOString(),
       });
-      router.replace('/login' as Href);
+      router.replace('/' as Href);
     } catch (registrationError) {
-      setError(registrationError instanceof Error && registrationError.message === 'EMAIL_ALREADY_EXISTS'
-        ? 'Este email já está cadastrado.'
+      setError(registrationError instanceof Error
+        ? (registrationError.message === 'EMAIL_ALREADY_EXISTS' ? 'Este email já está cadastrado.' : registrationError.message)
         : 'Não foi possível criar a conta.');
     }
   }
@@ -57,6 +70,7 @@ export default function CadastroScreen() {
             keyboardShouldPersistTaps="handled">
             <ScreenHeader title="Criar conta" />
             <View style={styles.content}>
+              {__DEV__ ? <AppButton title="Preencher com dados de teste" variant="outline" onPress={fillTestData} /> : null}
               <Field label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
               <Field label="Email" value={email} onChangeText={setEmail} placeholder="seu@email.com" keyboardType="email-address" />
               <Field label="Senha" value={password} onChangeText={setPassword} placeholder="Mínimo de 8 caracteres" secureTextEntry />
@@ -73,6 +87,7 @@ export default function CadastroScreen() {
                 onChangeText={setCampus}
                 placeholder="Seu campus"
               />
+              <Field label="Curso" value={course} onChangeText={setCourse} placeholder="Seu curso" />
 
               {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
 

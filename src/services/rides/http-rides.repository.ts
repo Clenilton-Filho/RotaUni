@@ -6,18 +6,33 @@ import { LocalSessionRepository } from '../auth/local-session.repository';
 
 const RIDES_PATH = '/api/v1/rides';
 
-type RawRide = Ride & { status?: string; university?: string; campus?: string };
+type RawRide = Record<string, any>;
 
 /** Normaliza o status da API para o dominio, com fallback 'open'. */
 function toRide(raw: RawRide): Ride {
   const status = raw.status?.toLowerCase();
   const normalized: Ride['status'] =
-    status === 'in_progress' || status === 'finished' ? status : 'open';
+    status === 'in_progress' || status === 'finished' || status === 'completed' || status === 'cancelled'
+      ? status
+      : 'open';
 
   // Fase D: escopo institucional. Fallback vazio para respostas antigas
   // (a restricao por universidade/campus vive no backend).
   return {
-    ...raw,
+    id: raw.id,
+    driver: raw.driver ?? {
+      id: raw.driverId,
+      name: raw.driverName ?? 'Motorista',
+      rating: raw.driverRating ?? null,
+    },
+    vehicle: typeof raw.vehicle === 'string' ? raw.vehicle : raw.vehicle?.model ?? '',
+    vehicleColor: raw.vehicleColor ?? raw.vehicle?.color ?? '',
+    departureTime: raw.departureTime,
+    destination: raw.destination,
+    totalCapacity: raw.totalCapacity ?? raw.availableSeats ?? (typeof raw.vehicle === 'object' ? raw.vehicle.seats : undefined) ?? 0,
+    confirmedPassengers: raw.confirmedPassengers ?? 0,
+    passengerNames: raw.passengerNames ?? [],
+    price: raw.price ?? 0,
     status: normalized,
     university: raw.university ?? '',
     campus: raw.campus ?? '',
@@ -37,23 +52,28 @@ export class HttpRidesRepository implements RidesRepository {
 
   constructor(baseUrl: string) {
     this.client = new ApiClient(baseUrl);
+    console.info(`[RotaUni] HttpRidesRepository baseUrl=${this.client.baseUrlForDiagnostics || '(vazia)'}`);
     this.sessionRepository = new LocalSessionRepository();
   }
 
   async listAvailableRides(): Promise<Ride[]> {
+    console.info(`[RotaUni] GET ${this.client.baseUrlForDiagnostics}${RIDES_PATH}`);
     const response = await this.client.get(
       RIDES_PATH,
       await this.resolveIdentityHeaders(),
     );
 
     if (!response.ok) {
+      console.error(`[RotaUni] GET ${RIDES_PATH} respondeu HTTP ${response.status}`);
       throw new ApiError(
         'Não foi possível carregar as caronas.',
         { status: response.status },
       );
     }
 
-    return ((await response.json()) as RawRide[]).map(toRide);
+    const rides = ((await response.json()) as RawRide[]).map(toRide);
+    console.info(`[RotaUni] GET ${RIDES_PATH} retornou ${rides.length} caronas`);
+    return rides;
   }
 
   async getRideById(id: string): Promise<Ride | null> {

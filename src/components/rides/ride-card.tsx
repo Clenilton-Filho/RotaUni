@@ -33,14 +33,14 @@ export function RideCard({ ride, onPress }: RideCardProps) {
           {ride.vehicle} • {ride.vehicleColor}
         </ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.detail}>
-          {ride.destination} • Saída {ride.departureTime} • {remainingSeats === 1 ? '1 vaga' : `${remainingSeats} vagas`}
+          {ride.destination} • {remainingSeats === 1 ? '1 vaga' : `${remainingSeats} vagas`}
         </ThemedText>
       </View>
 
       <View style={styles.right}>
         <ThemedText style={styles.time}>{ride.departureTime}</ThemedText>
         <ThemedText style={[styles.price, { color: theme.accent }]}>
-          {ride.price === null ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
+          {ride.price == null || ride.price === 0 ? 'Gratuita' : `R$ ${ride.price.toFixed(2).replace('.', ',')}`}
         </ThemedText>
         {status === 'full' ? <InfoBadge label="Lotada" tone="accent" /> : null}
         {status === 'almost-full' ? <InfoBadge label="Quase cheia" tone="accent" /> : null}

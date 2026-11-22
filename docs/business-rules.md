@@ -185,3 +185,9 @@ In HTTP mode (server data):
 - server-side cleanup requires a backend-provided mechanism (none exists today; restarting the backend resets its in-memory state).
 
 The mode considered is the master `EXPO_PUBLIC_DATA_SOURCE` plus any per-module override: a single module in HTTP hides the reset button. The confirm dialog states explicitly what will be cleared in the active mode. Do not use development reset behavior as the implementation of normal logout.
+# Regras de alinhamento com a API
+
+- O perfil inclui `course` e `rating`; quando não há avaliações, a UI exibe `Sem avaliações`.
+- O motorista pode ter `rating: null`; esse valor nunca é formatado diretamente com `toFixed`.
+- Caronas e reservas reconhecem `CANCELLED` como estado terminal. Caronas canceladas não aceitam novas reservas.
+- O backend mantém avaliação mútua: passageiros avaliam motoristas via `/ratings` e motoristas avaliam passageiros via `/passenger-ratings`.

@@ -3,6 +3,7 @@ import { asyncStorageAdapter } from '@/storage/async-storage.adapter';
 import { StorageKeys } from '@/storage/storage.keys';
 
 import { HttpUserRepository } from './http-user.repository';
+import { getRuntimeDataSource } from '@/state/data-source';
 
 export interface UserRepository {
   getByUserId(userId: string): Promise<UserProfile | null>;
@@ -58,7 +59,5 @@ function resolveAuthDataSource(): { dataSource: AuthDataSource; baseUrl: string 
 const profileDataSourceConfig = resolveAuthDataSource();
 
 /** Fabrica centralizada de perfis de usuario: chaveia entre local e HTTP. */
-export const userRepository: UserRepository =
-  profileDataSourceConfig.dataSource === 'http'
-    ? new HttpUserRepository(profileDataSourceConfig.baseUrl)
-    : localUserRepository;
+const httpRepository = new HttpUserRepository(profileDataSourceConfig.baseUrl);
+export const userRepository: UserRepository = new Proxy({} as UserRepository, { get: (_, key: keyof UserRepository) => (...args: never[]) => ((getRuntimeDataSource() === 'http' ? httpRepository : localUserRepository)[key] as (...args: any[]) => any)(...args) });

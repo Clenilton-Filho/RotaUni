@@ -12,6 +12,7 @@ import { bookingRepository } from '@/services/booking/booking.repository';
 import { rideHistoryRepository } from '@/services/history/ride-history.repository';
 import { ratingRepository } from '@/services/rating/rating.repository';
 import { userRepository } from '@/services/user/user.repository';
+import { getInitialDataSource, readDataSource, saveDataSource, setRuntimeDataSource, type DataSource } from './data-source';
 
 type AppState = {
   currentAccount: UserAccount | null;
@@ -32,6 +33,8 @@ type AppState = {
   dismissEndedBooking: () => void;
   logout: () => Promise<void>;
   resetLocalData: () => Promise<void>;
+  dataSource: DataSource;
+  setDataSource: (source: DataSource) => Promise<void>;
 };
 
 const AppContext = createContext<AppState | null>(null);
@@ -43,6 +46,8 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [lastEndedBooking, setLastEndedBooking] = useState<Booking | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [welcomeSeen, setWelcomeSeen] = useState(false);
+  const [dataSource, setDataSourceState] = useState<DataSource>(getInitialDataSource);
+  const dataSourceRef = useRef<DataSource>(getInitialDataSource());
   // Espelho da reserva ativa para detectar a transicao nao-null -> null
   // (encerramento pelo motorista) dentro de refreshCurrentBooking.
   const currentBookingRef = useRef<Booking | null>(null);
@@ -53,6 +58,10 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     async function hydrate() {
+      const source = await readDataSource();
+      if (dataSourceRef.current === getInitialDataSource()) {
+        setRuntimeDataSource(source); setDataSourceState(source); dataSourceRef.current = source;
+      }
       const session = await sessionRepository.getCurrentSession();
       if (!session) return;
       const account = await userAccountRepository.getById(session.accountId);
@@ -86,9 +95,20 @@ export function AppProvider({ children }: PropsWithChildren) {
       name: profileData.name,
       university: profileData.university,
       campus: profileData.campus,
+      course: profileData.course ?? 'Não informado',
     });
     const profile = { ...profileData, userId: account.id };
     await userRepository.saveProfile(profile);
+
+    // O cadastro concluído já autentica o usuário, assim como o fluxo de
+    // login. No HTTP, o token vem do POST /auth/register; no mock, a conta
+    // local continua válida sem token.
+    await sessionRepository.saveSession({ accountId: account.id, token: account.token });
+    setCurrentAccount(account);
+    setCurrentUser(profile);
+    const booking = await bookingRepository.getCurrentBooking();
+    setCurrentBooking(booking?.userId === account.id ? booking : null);
+    setLastEndedBooking(null);
   }
 
   async function login(email: string, password: string) {
@@ -97,7 +117,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     const profile = await userRepository.getByUserId(account.id);
     if (!profile) return false;
 
-    await sessionRepository.saveSession({ accountId: account.id });
+    await sessionRepository.saveSession({ accountId: account.id, token: account.token });
     setCurrentAccount(account);
     setCurrentUser(profile);
     const booking = await bookingRepository.getCurrentBooking();
@@ -153,6 +173,19 @@ export function AppProvider({ children }: PropsWithChildren) {
     setLastEndedBooking(null);
   }
 
+  async function setDataSource(source: DataSource) {
+    setRuntimeDataSource(source);
+    dataSourceRef.current = source;
+    setDataSourceState(source);
+    await saveDataSource(source);
+    if (!currentAccount) {
+      await sessionRepository.clearSession();
+      setCurrentUser(null);
+      setCurrentBooking(null);
+      setLastEndedBooking(null);
+    }
+  }
+
   async function resetLocalData() {
     await Promise.all([
       sessionRepository.clearSession(),
@@ -189,6 +222,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         dismissEndedBooking,
         logout,
         resetLocalData,
+        dataSource,
+        setDataSource,
       }}>
       {children}
     </AppContext.Provider>

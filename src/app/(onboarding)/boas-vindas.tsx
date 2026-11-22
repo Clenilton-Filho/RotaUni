@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
@@ -16,11 +16,11 @@ import { useAppState } from '@/state/app-provider';
  */
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { markWelcomeSeen } = useAppState();
+  const { currentAccount, currentUser, markWelcomeSeen, dataSource, setDataSource } = useAppState();
 
   async function handleStart() {
     await markWelcomeSeen();
-    router.replace('/login' as unknown as Href);
+    router.replace((currentAccount && currentUser ? '/' : '/login') as unknown as Href);
   }
 
   return (
@@ -45,6 +45,9 @@ export default function WelcomeScreen() {
 
         <View style={styles.footer}>
           <AppButton title="Começar" disabled={false} onPress={() => void handleStart()} />
+          <Pressable accessibilityRole="button" onPress={() => void setDataSource(dataSource === 'http' ? 'mock' : 'http')} style={styles.sourceToggle}>
+            <ThemedText style={styles.sourceLabel}>{dataSource === 'http' ? 'Modo: API (HTTP)' : 'Modo: Offline (Mock)'}</ThemedText>
+          </Pressable>
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -92,5 +95,8 @@ const styles = StyleSheet.create({
   footer: {
     // Respiro inferior do botao ancorado no rodape.
     paddingTop: 16,
+    alignItems: 'center',
   },
+  sourceToggle: { marginTop: 10, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.12)' },
+  sourceLabel: { color: 'rgba(255,255,255,0.72)', fontSize: 12 },
 });

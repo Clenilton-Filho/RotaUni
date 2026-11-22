@@ -51,7 +51,7 @@ export default function HistoryRideDetailsScreen() {
                   {ride.driver.name}
                 </ThemedText>
                 <ThemedText themeColor="textSecondary">
-                  ★ {ride.driver.rating.toFixed(1)}
+                  {ride.driver.rating == null ? 'Sem avaliações' : `★ ${ride.driver.rating.toFixed(1)}`}
                 </ThemedText>
               </View>
             </View>

@@ -129,6 +129,10 @@ function toBookingStatus(responseStatus: BookingApiResponse['status']): BookingS
       return 'pending';
     case 'CONFIRMED':
       return 'confirmed';
+    case 'COMPLETED':
+      return 'completed';
+    case 'CANCELLED':
+      return 'cancelled';
     default:
       return 'rejected';
   }

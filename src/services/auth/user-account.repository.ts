@@ -4,6 +4,7 @@ import { StorageKeys } from '@/storage/storage.keys';
 import * as Crypto from 'expo-crypto';
 
 import { HttpUserAccountRepository } from './http-auth.repository';
+import { getRuntimeDataSource } from '@/state/data-source';
 
 import {
     createPasswordMaterial,
@@ -16,6 +17,7 @@ export type RegisterProfileFields = {
   university?: string;
   institution?: string;
   campus?: string;
+  course?: string;
 };
 
 export interface UserAccountRepository {
@@ -111,7 +113,6 @@ if (__DEV__) {
 }
 
 /** Fabrica centralizada de contas de usuario: chaveia entre local e HTTP. */
-export const userAccountRepository: UserAccountRepository =
-  authDataSourceConfig.dataSource === 'http'
-    ? new HttpUserAccountRepository(authDataSourceConfig.baseUrl)
-    : new LocalUserAccountRepository();
+const httpRepository = new HttpUserAccountRepository(authDataSourceConfig.baseUrl);
+const mockRepository = new LocalUserAccountRepository();
+export const userAccountRepository: UserAccountRepository = new Proxy({} as UserAccountRepository, { get: (_, key: keyof UserAccountRepository) => (...args: never[]) => ((getRuntimeDataSource() === 'http' ? httpRepository : mockRepository)[key] as (...args: any[]) => any)(...args) });
