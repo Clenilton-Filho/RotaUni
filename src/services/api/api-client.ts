@@ -19,23 +19,28 @@ export class ApiError extends Error {
 }
 
 export function getApiBaseUrl(): string {
-  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const baseUrl = process.env.EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_BASE_URL || 'https://rotauni-api.onrender.com';
+  return baseUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '') + '/api/v1';
+}
 
-  if (!baseUrl) {
-    throw new ApiError(
-      'EXPO_PUBLIC_API_BASE_URL não configurada: defina a URL base da API RotaUni no ambiente. ' +
-        'Consulte .env.example.',
-    );
+const REQUEST_TIMEOUT_MS = 60_000;
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return baseUrl.replace(/\/+$/, '');
 }
 
 export class ApiClient {
   private readonly baseUrl: string;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl.replace(/\/+$/, '');
+    const configuredUrl = process.env.EXPO_PUBLIC_API_URL || baseUrl || getApiBaseUrl();
+    this.baseUrl = configuredUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
   }
 
   get baseUrlForDiagnostics() { return this.baseUrl; }
@@ -44,7 +49,7 @@ export class ApiClient {
     let response: Response;
 
     try {
-      response = await fetch(`${this.baseUrl}${path}`, {
+      response = await fetchWithTimeout(`${this.baseUrl}${path}`, {
         method: 'GET',
         headers: { Accept: 'application/json', ...headers },
       });
@@ -62,7 +67,7 @@ export class ApiClient {
     let response: Response;
 
     try {
-      response = await fetch(`${this.baseUrl}${path}`, {
+      response = await fetchWithTimeout(`${this.baseUrl}${path}`, {
         method: 'POST',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body),
@@ -81,7 +86,7 @@ export class ApiClient {
     let response: Response;
 
     try {
-      response = await fetch(`${this.baseUrl}${path}`, {
+      response = await fetchWithTimeout(`${this.baseUrl}${path}`, {
         method: 'PUT',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body),
@@ -100,7 +105,7 @@ export class ApiClient {
     let response: Response;
 
     try {
-      response = await fetch(`${this.baseUrl}${path}`, {
+      response = await fetchWithTimeout(`${this.baseUrl}${path}`, {
         method: 'DELETE',
         headers: { Accept: 'application/json', ...headers },
       });
