@@ -70,7 +70,9 @@ export default function CadastroScreen() {
             keyboardShouldPersistTaps="handled">
             <ScreenHeader title="Criar conta" />
             <View style={styles.content}>
-              {__DEV__ ? <AppButton title="Preencher com dados de teste" variant="outline" onPress={fillTestData} /> : null}
+              {process.env.EXPO_PUBLIC_ENABLE_TEST_DATA !== 'false' ? (
+                <AppButton title="Preencher com dados de teste" variant="outline" onPress={fillTestData} />
+              ) : null}
               <Field label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
               <Field label="Email" value={email} onChangeText={setEmail} placeholder="seu@email.com" keyboardType="email-address" />
               <Field label="Senha" value={password} onChangeText={setPassword} placeholder="Mínimo de 8 caracteres" secureTextEntry />
