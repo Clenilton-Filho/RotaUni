@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -31,9 +31,12 @@ export default function WelcomeScreen() {
             base (rodape), como na referencia visual. */}
         <View style={styles.heroArea}>
           <View style={styles.heroBlock}>
-            <View style={styles.emblem}>
-              <Ionicons name="car-sport" size={34} color="#FFFFFF" />
-            </View>
+            <Image
+              source={require('@/assets/images/icon.png')}
+              style={[styles.emblem, { aspectRatio: 1, borderRadius: 20 }]}
+              contentFit="contain"
+              resizeMode="contain"
+            />
             <ThemedText type="title" style={styles.title}>
               RotaUni
             </ThemedText>
@@ -76,9 +79,6 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 20,
-    backgroundColor: '#C2410C',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 8,
   },
   title: {

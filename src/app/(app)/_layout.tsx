@@ -5,15 +5,14 @@ import { TabBarTopAccentButton } from '@/components/tab-bar-button';
 import { useAppState } from '@/state/app-provider';
 
 export default function AppLayout() {
-  const { currentAccount, currentUser, welcomeSeen, isHydrated } = useAppState();
+  const { currentAccount, currentUser, isHydrated } = useAppState();
   const theme = useTheme();
 
   if (!isHydrated) return null;
-  if (!welcomeSeen) return <Redirect href="/boas-vindas" />;
   if (!currentAccount || !currentUser) {
-    // Onboarding: primeira visita do dispositivo ve as boas-vindas; as
-    // seguintes vao direto ao login.
-    return <Redirect href="/login" />;
+    // Sem sessao ativa, o onboarding e sempre o ponto de entrada, mesmo
+    // para dispositivos que ja viram a tela de boas-vindas anteriormente.
+    return <Redirect href="/boas-vindas" />;
   }
 
   return (
